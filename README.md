@@ -4,9 +4,17 @@ Inferring the topics of Wikipedia articles. Capstone project
 
 Data Processing -
 
-1. Pickle file for Wikitext (contains tokens)
+1. 
 
-https://drive.google.com/open?id=1DlNxxNh6WA5ds7px844LnBbhEzV0Ydyo
+a. Pickle file for Wikitext (contains tokens)
+
+https://drive.google.com/open?id=1bgkuTbN-eRlKLiPsbK8fbtqlFGD-iK1Z
+
+b. Pickle file for Wikisections (contains tokens)
+
+https://drive.google.com/open?id=1OWbzrvSpiibS5xEuhltB65nXMxZvnSRg
+
+
 
 2. Pre-trained word embeddings (fastText)
 
