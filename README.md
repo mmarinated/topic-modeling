@@ -2,9 +2,7 @@
 Inferring the topics of Wikipedia articles. Capstone project
 
 
-Data Processing -
-
-1. 
+1. Data Processing -
 
 a. Pickle file for Wikitext (contains tokens)
 
