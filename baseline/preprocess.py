@@ -43,10 +43,13 @@ def train_validate_test_split(df, train_percent=.8, validate_percent=.1, seed=No
     test = df.iloc[perm[validate_end:]]
     return train, validate, test
 
-def tokenize_dataset(dataset, word_to_index):
+def tokenize_dataset(dataset, word_to_index, max_num_tokens=None):
+    """
+    If max_num_tokens=None, all tokens are taken.
+    """
     _current_dictified = []
     for l in tqdm(dataset['tokens']):
-        encoded_l = [word_to_index[i] if i in word_to_index else word_to_index['<unk>'] for i in l]
+        encoded_l = [word_to_index[i] if i in word_to_index else word_to_index['<unk>'] for i in l[:max_num_tokens]]
         _current_dictified.append(encoded_l)
     return _current_dictified
 
