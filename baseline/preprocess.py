@@ -23,9 +23,9 @@ from torch.utils.data import Dataset, RandomSampler, SequentialSampler, DataLoad
 from sklearn.preprocessing import MultiLabelBinarizer
 
 nltk.download('stopwords')
-stop_words = nltk.corpus.stopwords.words("english")
 
-def remove_stop_words(tokens):
+def remove_stop_words(tokens, language="english"):
+    stop_words = nltk.corpus.stopwords.words(language)
     result = []
     for token in tokens:
         if not token in stop_words:
