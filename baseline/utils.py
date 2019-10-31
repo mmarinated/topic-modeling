@@ -19,15 +19,13 @@ def load_vectors(fname):
 def create_embeddings_matrix(word_to_index, embeddings):
     vocab_size = len(word_to_index)
     embed_dim = len(list(embeddings.values())[0])
-    weights_matrix_ve = np.zeros((vocab_size,embed_dim))
+    weights_matrix_ve = np.zeros((vocab_size, embed_dim))
 
     words_found = 0
     for i, word in enumerate(word_to_index):
         if word in embeddings.keys():
             weights_matrix_ve[i] = embeddings[word]
             words_found += 1
-        else:
-            weights_matrix_ve[i] = np.zeros(embed_dim)
     weights_matrix_ve = torch.FloatTensor(weights_matrix_ve)
     
     print("Total words in vocab: {}".format(vocab_size))
@@ -77,7 +75,7 @@ def test_model(loader, model, device, threshold=0.5):
 
 def create_per_class_tables(loader, model, device, class_names, threshold=0.5):
     """
-    Help function that tests the model's performance on a dataset
+    Function that creates per class tables with count, TN, FN, TP, FP, precision, recall, f1.
     @param: loader - data loader for the dataset to test against
     """
     model.eval()
