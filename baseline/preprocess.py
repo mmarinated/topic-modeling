@@ -22,6 +22,7 @@ from torch.autograd import Variable
 from torch.utils.data import Dataset, RandomSampler, SequentialSampler, DataLoader
 from sklearn.preprocessing import MultiLabelBinarizer
 
+np.random.seed(57)
 nltk.download('stopwords')
 stop_words = nltk.corpus.stopwords.words("english")
 
@@ -97,3 +98,17 @@ def pad_collate_fn(batch, word_to_index):
     target_tensor = torch.stack(target_list)
     
     return input_tensor, length_tensor, target_tensor
+
+def create_vocab_from_tokens(tokens):
+    """Returns list of unique tokens given tokens = list of lists."""
+    # to preserve order, use list(dict.fromkeys(keywords).keys()), python >=3.7
+    return list(dict.fromkeys(
+        [word for text in list(tokens) for word in text]
+    ).keys())
+
+def create_lookups_for_vocab(vocab, add_tokens_list=[]):
+    """Can add add_tokens_list in the begining, e.g. ["<pad>", "<unk>"] (will be mapped to indices [0, 1]).
+    Returns: index_to_word, word_to_index"""
+    index_to_word = add_tokens_list + vocab
+    word_to_index = {word: idx for idx, word in enumerate(index_to_word)}
+    return index_to_word, word_to_index

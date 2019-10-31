@@ -16,6 +16,24 @@ def load_vectors(fname):
         data[tokens[0]] = torch.tensor(list(map(float, tokens[1:])))
     return data
 
+def create_embeddings_matrix(word_to_index, embeddings):
+    vocab_size = len(word_to_index)
+    embed_dim = len(list(embeddings.values())[0])
+    weights_matrix_ve = np.zeros((vocab_size,embed_dim))
+
+    words_found = 0
+    for i, word in enumerate(word_to_index):
+        if word in embeddings.keys():
+            weights_matrix_ve[i] = embeddings[word]
+            words_found += 1
+        else:
+            weights_matrix_ve[i] = np.zeros(embed_dim)
+    weights_matrix_ve = torch.FloatTensor(weights_matrix_ve)
+    
+    print("Total words in vocab: {}".format(vocab_size))
+    print("No. of words from vocab found in embeddings: {}".format(words_found))
+    return weights_matrix_ve
+
 # Function for testing the model
 def test_model(loader, model, device, threshold=0.5):
     """
