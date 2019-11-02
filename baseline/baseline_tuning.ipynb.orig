@@ -1,0 +1,1841 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# import dependencies\n",
+    "import nltk\n",
+    "import json\n",
+    "import io\n",
+    "import gzip\n",
+    "import torch\n",
+    "import string\n",
+    "import random\n",
+    "import jsonlines\n",
+    "import pandas as pd\n",
+    "import pickle as pkl\n",
+    "import numpy as np\n",
+    "from tqdm import tqdm\n",
+    "from functools import partial\n",
+    "\n",
+    "import torch\n",
+    "import torch.nn as nn\n",
+    "import torch.functional as F\n",
+    "from torch.autograd import Variable\n",
+    "from torch.utils.data import Dataset, RandomSampler, SequentialSampler, DataLoader\n",
+    "from sklearn.preprocessing import MultiLabelBinarizer"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+<<<<<<< HEAD
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# import utils\n",
+    "# import importlib\n",
+    "# importlib.reload(utils)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+=======
+>>>>>>> origin/master
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "'cuda:0'"
+      ]
+     },
+<<<<<<< HEAD
+     "execution_count": 3,
+=======
+     "execution_count": 2,
+>>>>>>> origin/master
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "device = \"cuda:0\" if torch.cuda.is_available() else \"cpu\"\n",
+    "device"
+   ]
+  },
+  {
+   "cell_type": "code",
+<<<<<<< HEAD
+   "execution_count": 4,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "PATH_TO_FOLDER = \"/scratch/mz2476/\""
+=======
+   "execution_count": 3,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "PATH_TO_EMBEDDINGS_FOLDER = \"/scratch/mz2476/wiki/embeddings/\"\n",
+    "PATH_TO_DATA_FOLDER = \"/scratch/mz2476/wiki/data/\"\n",
+    "PATH_TO_MODELS_FOLDER = \"/scratch/mz2476/wiki/models/\""
+>>>>>>> origin/master
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Load data"
+   ]
+  },
+  {
+   "cell_type": "code",
+<<<<<<< HEAD
+   "execution_count": 5,
+   "metadata": {
+    "scrolled": true
+   },
+   "outputs": [],
+   "source": [
+    "# load the dataframe from pickle file\n",
+    "import pickle as pkl\n",
+    "\n",
+    "wiki_df =  pkl.load(open(PATH_TO_FOLDER + \"wikitext_tokenized.p\", \"rb\"))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {
+    "scrolled": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>QID</th>\n",
+       "      <th>mid_level_categories</th>\n",
+       "      <th>tokens</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <td>0</td>\n",
+       "      <td>Q2000864</td>\n",
+       "      <td>[Culture.Philosophy and religion]</td>\n",
+       "      <td>[affirming, the, consequent, sometimes, called...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>1</td>\n",
+       "      <td>Q1064113</td>\n",
+       "      <td>[History_And_Society.Business and economics]</td>\n",
+       "      <td>[growth, two, six, two, zero, one, six, zero, ...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>2</td>\n",
+       "      <td>Q6941060</td>\n",
+       "      <td>[Geography.Europe]</td>\n",
+       "      <td>[the, museum, of, work, or, arbetets, museum, ...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>3</td>\n",
+       "      <td>Q843920</td>\n",
+       "      <td>[History_And_Society.History and society, STEM...</td>\n",
+       "      <td>[like, this, one, in, dorset, england, arable,...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>4</td>\n",
+       "      <td>Q178999</td>\n",
+       "      <td>[STEM.Biology, STEM.Medicine]</td>\n",
+       "      <td>[an, axon, from, greek, axis, or, nerve, fiber...</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "        QID                               mid_level_categories  \\\n",
+       "0  Q2000864                  [Culture.Philosophy and religion]   \n",
+       "1  Q1064113       [History_And_Society.Business and economics]   \n",
+       "2  Q6941060                                 [Geography.Europe]   \n",
+       "3   Q843920  [History_And_Society.History and society, STEM...   \n",
+       "4   Q178999                      [STEM.Biology, STEM.Medicine]   \n",
+       "\n",
+       "                                              tokens  \n",
+       "0  [affirming, the, consequent, sometimes, called...  \n",
+       "1  [growth, two, six, two, zero, one, six, zero, ...  \n",
+       "2  [the, museum, of, work, or, arbetets, museum, ...  \n",
+       "3  [like, this, one, in, dorset, england, arable,...  \n",
+       "4  [an, axon, from, greek, axis, or, nerve, fiber...  "
+      ]
+     },
+     "execution_count": 6,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "wiki_df.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "metadata": {
+    "scrolled": true
+   },
+=======
+   "execution_count": 4,
+   "metadata": {},
+>>>>>>> origin/master
+   "outputs": [
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "[nltk_data] Downloading package stopwords to /home/mz2476/nltk_data...\n",
+      "[nltk_data]   Package stopwords is already up-to-date!\n"
+     ]
+    }
+   ],
+   "source": [
+<<<<<<< HEAD
+    "# import preprocess\n",
+    "# import importlib\n",
+    "# importlib.reload(preprocess)\n",
+    "\n",
+    "from preprocess import remove_stop_words, train_validate_test_split\n",
+    "from preprocess import tokenize_dataset, TensoredDataset, pad_collate_fn"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "metadata": {
+    "scrolled": true
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>QID</th>\n",
+       "      <th>mid_level_categories</th>\n",
+       "      <th>tokens</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <td>0</td>\n",
+       "      <td>Q2000864</td>\n",
+       "      <td>[Culture.Philosophy and religion]</td>\n",
+       "      <td>[affirming, consequent, sometimes, called, con...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>1</td>\n",
+       "      <td>Q1064113</td>\n",
+       "      <td>[History_And_Society.Business and economics]</td>\n",
+       "      <td>[growth, two, six, two, zero, one, six, zero, ...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>2</td>\n",
+       "      <td>Q6941060</td>\n",
+       "      <td>[Geography.Europe]</td>\n",
+       "      <td>[museum, work, arbetets, museum, swedish, muse...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>3</td>\n",
+       "      <td>Q843920</td>\n",
+       "      <td>[History_And_Society.History and society, STEM...</td>\n",
+       "      <td>[like, one, dorset, england, arable, land, lat...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>4</td>\n",
+       "      <td>Q178999</td>\n",
+       "      <td>[STEM.Biology, STEM.Medicine]</td>\n",
+       "      <td>[axon, greek, axis, nerve, fiber, long, slende...</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "        QID                               mid_level_categories  \\\n",
+       "0  Q2000864                  [Culture.Philosophy and religion]   \n",
+       "1  Q1064113       [History_And_Society.Business and economics]   \n",
+       "2  Q6941060                                 [Geography.Europe]   \n",
+       "3   Q843920  [History_And_Society.History and society, STEM...   \n",
+       "4   Q178999                      [STEM.Biology, STEM.Medicine]   \n",
+       "\n",
+       "                                              tokens  \n",
+       "0  [affirming, consequent, sometimes, called, con...  \n",
+       "1  [growth, two, six, two, zero, one, six, zero, ...  \n",
+       "2  [museum, work, arbetets, museum, swedish, muse...  \n",
+       "3  [like, one, dorset, england, arable, land, lat...  \n",
+       "4  [axon, greek, axis, nerve, fiber, long, slende...  "
+      ]
+     },
+     "execution_count": 10,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "#Removing stop words\n",
+    "wiki_df['tokens'] = wiki_df[\"tokens\"].apply(remove_stop_words)\n",
+    "wiki_df.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(99969, 3)"
+      ]
+     },
+     "execution_count": 11,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "#Removing rows with missing labels\n",
+    "mask = wiki_df.mid_level_categories.apply(lambda x: len(x) > 0)\n",
+    "wiki_df = wiki_df[mask]\n",
+    "wiki_df = wiki_df.reset_index(drop=True)\n",
+    "wiki_df.shape"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(99960, 3)"
+      ]
+     },
+     "execution_count": 12,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "#Removing rows with no tokens\n",
+    "mask = wiki_df.tokens.apply(lambda x: len(x) > 0)\n",
+    "wiki_df = wiki_df[mask]\n",
+    "wiki_df = wiki_df.reset_index(drop=True)\n",
+    "wiki_df.shape"
+=======
+    "from preprocess import create_lookups_for_vocab, pad_collate_fn"
+>>>>>>> origin/master
+   ]
+  },
+  {
+   "cell_type": "code",
+<<<<<<< HEAD
+   "execution_count": 7,
+   "metadata": {
+    "scrolled": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>QID</th>\n",
+       "      <th>mid_level_categories</th>\n",
+       "      <th>tokens</th>\n",
+       "      <th>labels</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <td>0</td>\n",
+       "      <td>Q2000864</td>\n",
+       "      <td>[Culture.Philosophy and religion]</td>\n",
+       "      <td>[affirming, the, consequent, sometimes, called...</td>\n",
+       "      <td>[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, ...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>1</td>\n",
+       "      <td>Q1064113</td>\n",
+       "      <td>[History_And_Society.Business and economics]</td>\n",
+       "      <td>[growth, two, six, two, zero, one, six, zero, ...</td>\n",
+       "      <td>[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>2</td>\n",
+       "      <td>Q6941060</td>\n",
+       "      <td>[Geography.Europe]</td>\n",
+       "      <td>[the, museum, of, work, or, arbetets, museum, ...</td>\n",
+       "      <td>[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>3</td>\n",
+       "      <td>Q843920</td>\n",
+       "      <td>[History_And_Society.History and society, STEM...</td>\n",
+       "      <td>[like, this, one, in, dorset, england, arable,...</td>\n",
+       "      <td>[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>4</td>\n",
+       "      <td>Q178999</td>\n",
+       "      <td>[STEM.Biology, STEM.Medicine]</td>\n",
+       "      <td>[an, axon, from, greek, axis, or, nerve, fiber...</td>\n",
+       "      <td>[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "        QID                               mid_level_categories  \\\n",
+       "0  Q2000864                  [Culture.Philosophy and religion]   \n",
+       "1  Q1064113       [History_And_Society.Business and economics]   \n",
+       "2  Q6941060                                 [Geography.Europe]   \n",
+       "3   Q843920  [History_And_Society.History and society, STEM...   \n",
+       "4   Q178999                      [STEM.Biology, STEM.Medicine]   \n",
+       "\n",
+       "                                              tokens  \\\n",
+       "0  [affirming, the, consequent, sometimes, called...   \n",
+       "1  [growth, two, six, two, zero, one, six, zero, ...   \n",
+       "2  [the, museum, of, work, or, arbetets, museum, ...   \n",
+       "3  [like, this, one, in, dorset, england, arable,...   \n",
+       "4  [an, axon, from, greek, axis, or, nerve, fiber...   \n",
+       "\n",
+       "                                              labels  \n",
+       "0  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, ...  \n",
+       "1  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...  \n",
+       "2  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...  \n",
+       "3  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...  \n",
+       "4  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...  "
+      ]
+     },
+     "execution_count": 7,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# Binarize the labels\n",
+    "# labels list: mlb.classes_\n",
+    "mlb = MultiLabelBinarizer()\n",
+    "wiki_df[\"labels\"] = list(mlb.fit_transform(wiki_df.mid_level_categories))\n",
+    "wiki_df.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array(['Culture.Arts', 'Culture.Broadcasting',\n",
+       "       'Culture.Crafts and hobbies', 'Culture.Entertainment',\n",
+       "       'Culture.Food and drink', 'Culture.Games and toys',\n",
+       "       'Culture.Internet culture', 'Culture.Language and literature',\n",
+       "       'Culture.Media', 'Culture.Music', 'Culture.Performing arts',\n",
+       "       'Culture.Philosophy and religion', 'Culture.Plastic arts',\n",
+       "       'Culture.Sports', 'Culture.Visual arts', 'Geography.Africa',\n",
+       "       'Geography.Americas', 'Geography.Antarctica', 'Geography.Asia',\n",
+       "       'Geography.Bodies of water', 'Geography.Europe',\n",
+       "       'Geography.Landforms', 'Geography.Maps', 'Geography.Oceania',\n",
+       "       'Geography.Parks', 'History_And_Society.Business and economics',\n",
+       "       'History_And_Society.Education',\n",
+       "       'History_And_Society.History and society',\n",
+       "       'History_And_Society.Military and warfare',\n",
+       "       'History_And_Society.Politics and government',\n",
+       "       'History_And_Society.Transportation', 'STEM.Biology',\n",
+       "       'STEM.Chemistry', 'STEM.Engineering', 'STEM.Geosciences',\n",
+       "       'STEM.Information science', 'STEM.Mathematics', 'STEM.Medicine',\n",
+       "       'STEM.Meteorology', 'STEM.Physics', 'STEM.Science', 'STEM.Space',\n",
+       "       'STEM.Technology', 'STEM.Time'], dtype=object)"
+      ]
+     },
+     "execution_count": 8,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "mlb.classes_"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# train/val/test split\n",
+    "wiki_train, wiki_valid, wiki_test = train_validate_test_split(wiki_df, seed=1)\n",
+    "\n",
+    "wiki_train = wiki_train.reset_index(drop=True)\n",
+    "wiki_valid = wiki_valid.reset_index(drop=True)\n",
+    "wiki_test = wiki_test.reset_index(drop=True)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+=======
+   "execution_count": 5,
+>>>>>>> origin/master
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Vocab size is: 682850\n"
+     ]
+    }
+   ],
+   "source": [
+    "# LOAD vocab, tensor dataset, classes\n",
+    "vocab = torch.load(PATH_TO_DATA_FOLDER + \"vocab_all_en.pt\")\n",
+    "print(\"Vocab size is:\", len(vocab))\n",
+    "index_to_word, word_to_index = create_lookups_for_vocab(vocab)\n",
+    "\n",
+<<<<<<< HEAD
+    "print(\"Vocab size is: {}\".format(len(vocab)))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 16,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "word_to_index = {\"<pad>\":0, \"<unk>\":1}\n",
+    "for word in vocab:\n",
+    "    if word not in word_to_index:\n",
+    "        word_to_index[word] = len(word_to_index)\n",
+    "index_to_word = {v:k for k, v in word_to_index.items()}"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 17,
+   "metadata": {
+    "scrolled": true
+   },
+   "outputs": [
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "100%|██████████| 79968/79968 [00:07<00:00, 11268.57it/s]\n",
+      "100%|██████████| 9996/9996 [00:00<00:00, 10221.67it/s]\n",
+      "100%|██████████| 9996/9996 [00:00<00:00, 10470.73it/s]\n"
+     ]
+    }
+   ],
+   "source": [
+    "# CHANGE max number of tokens \n",
+    "max_num_tokens = None\n",
+    "wiki_tokenized_train = tokenize_dataset(wiki_train, word_to_index, max_num_tokens=max_num_tokens)\n",
+    "wiki_tokenized_val = tokenize_dataset(wiki_valid, word_to_index, max_num_tokens=max_num_tokens)\n",
+    "wiki_tokenized_test = tokenize_dataset(wiki_test, word_to_index, max_num_tokens=max_num_tokens)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 18,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "wiki_tokenized_datasets = {}\n",
+    "wiki_tokenized_datasets['X_train'] = wiki_tokenized_train\n",
+    "wiki_tokenized_datasets['X_val'] = wiki_tokenized_val\n",
+    "wiki_tokenized_datasets['X_test'] = wiki_tokenized_test\n",
+    "\n",
+    "wiki_tokenized_datasets['y_train'] = list(wiki_train.labels)\n",
+    "wiki_tokenized_datasets['y_val'] = list(wiki_valid.labels)\n",
+    "wiki_tokenized_datasets['y_test'] = list(wiki_test.labels)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 19,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "wiki_tensor_dataset = {}\n",
+    "wiki_tensor_dataset['train'] = TensoredDataset(\n",
+    "    wiki_tokenized_datasets['X_train'], wiki_tokenized_datasets['y_train']\n",
+    ")\n",
+    "wiki_tensor_dataset['val'] = TensoredDataset(\n",
+    "    wiki_tokenized_datasets['X_val'], wiki_tokenized_datasets['y_val']\n",
+    ")\n",
+    "wiki_tensor_dataset['test'] = TensoredDataset(\n",
+    "    wiki_tokenized_datasets['X_test'], wiki_tokenized_datasets['y_test']\n",
+    ")"
+=======
+    "wiki_tensor_dataset = torch.load(PATH_TO_DATA_FOLDER + \"wiki_tensor_dataset_vocab_all_en.pt\")\n",
+    "\n",
+    "classes = torch.load(PATH_TO_DATA_FOLDER + \"classes_list.pt\")\n",
+    "mlb = MultiLabelBinarizer(classes)"
+>>>>>>> origin/master
+   ]
+  },
+  {
+   "cell_type": "code",
+<<<<<<< HEAD
+   "execution_count": 20,
+=======
+   "execution_count": 6,
+>>>>>>> origin/master
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+<<<<<<< HEAD
+       "(tensor([471099, 117993, 555725, 176363, 279153, 426975, 471099, 592294, 507425,\n",
+       "         555133, 183208,  82528, 183208,  16074, 543350, 135704, 345438, 279300,\n",
+       "          45624, 377149,  61989,  61989]),\n",
+       " tensor([22.]),\n",
+       " tensor([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,\n",
+       "         0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]))"
+      ]
+     },
+     "execution_count": 20,
+=======
+       "(tensor([13030,  8330,  3721,  8330,  3721,   132,  2496, 13031,  4719,  3982,\n",
+       "         13031,  3178,   303,  5510, 13032,  8334,  2496, 13031,  4719,  1828,\n",
+       "          2496,  1985, 13033, 10701, 13034,     7,  5299,  2338,  6948,     5,\n",
+       "             9,     9,     8, 10510,   480, 13035, 13036, 11814, 13035, 13036,\n",
+       "           965,   933,  2789,     5,   223,    10,   933, 13037,  6777,  1646,\n",
+       "          3271, 13038,  2496, 13031,  4719,  1036, 13039,  1985,  2300,  1495,\n",
+       "           601, 13040,  1495,     5,     9,   208,     6,     5,     9,     9,\n",
+       "            11,   568,     5,     9,     9,   208, 13041,  1467,   403, 13042,\n",
+       "          9309,  1065, 13043, 13044, 13043, 13044,  2300,  2189,  1880,  8330,\n",
+       "          4719,   452,    10,     8,     8,     8, 13035, 13036,    21, 13045,\n",
+       "          2300, 13045,  2641,  3721,  4340,  4251, 13043, 13044, 13046,  2496,\n",
+       "         13031,  4719,  4340, 13045, 13047, 13048, 13049, 13050,  5496,  9571,\n",
+       "           648,     5,     9,    10,     8,     5,    11, 13051,  6945,  9127,\n",
+       "          2496,    53,  5458, 13051,  6945,  9127,  6945,  9127,  2025,   833,\n",
+       "          6777,  3721, 13052,  3271, 13053, 13054,  3721, 11814, 13035, 13036,\n",
+       "           689,  1261,    10,     8,     5,   253, 13055,  2496, 13031,  4719,\n",
+       "         12197, 13052,  3271, 13053,  3721,  5251,   952,  3078,   167,  6674,\n",
+       "            10,  8340,   439,  1366, 13056,   952,  1199,    10,     8,     5,\n",
+       "             6,  3541,  1816,   794,    10,     8,     8,   611,   532,    10,\n",
+       "             8,    10,     8,  1108, 13057,  2471,  5251,   952,   439,  8340,\n",
+       "          1140,  2496, 13031,  4719,   132, 10436,  3078,  3271, 13053,   132,\n",
+       "            58, 13058,   414, 13031,   132,   277,  2496,  2076, 13031,  1869,\n",
+       "           525,    24, 13031,  4719,   526,  8330,  8340,  2496,    81,   397,\n",
+       "           398, 13059,  3435,  2869,  2496, 13031,  8330,  8340,  2055,     5,\n",
+       "             9,     9,     8,  8330,  8340,  2496, 13035, 13036]),\n",
+       " tensor([248.]),\n",
+       " tensor([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,\n",
+       "         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]))"
+      ]
+     },
+     "execution_count": 6,
+>>>>>>> origin/master
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "wiki_tensor_dataset[\"train\"].__getitem__(200)"
+   ]
+  },
+  {
+   "cell_type": "code",
+<<<<<<< HEAD
+   "execution_count": 21,
+=======
+   "execution_count": 7,
+>>>>>>> origin/master
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# create dataloader\n",
+    "wiki_loaders = {}\n",
+    "\n",
+    "batch_size = 32\n",
+    "\n",
+    "for split, wiki_dataset in wiki_tensor_dataset.items():\n",
+    "    wiki_loaders[split] = DataLoader(\n",
+    "        wiki_dataset, \n",
+    "        batch_size=batch_size, \n",
+    "        shuffle=True, \n",
+    "        collate_fn=partial(pad_collate_fn, word_to_index=word_to_index)\n",
+    "    )"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Load the embeddings and make a pretrained embeddings matrix"
+   ]
+  },
+  {
+   "cell_type": "code",
+<<<<<<< HEAD
+   "execution_count": 24,
+=======
+   "execution_count": 8,
+>>>>>>> origin/master
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "<module 'utils' from '/home/mz2476/topic-modeling/topic-modeling/baseline/utils.py'>"
+      ]
+     },
+<<<<<<< HEAD
+     "execution_count": 24,
+=======
+     "execution_count": 8,
+>>>>>>> origin/master
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "import utils\n",
+    "import importlib\n",
+    "importlib.reload(utils)"
+   ]
+  },
+  {
+   "cell_type": "code",
+<<<<<<< HEAD
+   "execution_count": 23,
+=======
+   "execution_count": 9,
+>>>>>>> origin/master
+   "metadata": {
+    "scrolled": true
+   },
+   "outputs": [
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+<<<<<<< HEAD
+      "2519370it [03:33, 11826.48it/s]\n"
+=======
+      "2519370it [03:22, 12469.20it/s]\n"
+>>>>>>> origin/master
+     ]
+    }
+   ],
+   "source": [
+<<<<<<< HEAD
+=======
+    "# # Aligned fasstext. 2.5 million\n",
+    "embeddings = utils.load_vectors(PATH_TO_EMBEDDINGS_FOLDER + \"wiki.en.align.vec\")\n",
+    "\n",
+>>>>>>> origin/master
+    "# # CHANGE to googlenews vectors\n",
+    "# import gensim\n",
+    " \n",
+    "# model = gensim.models.KeyedVectors.load(\"/scratch/mz2476/GoogleNews-vectors-negative300.bin\", binary=True)  \n",
+    " \n",
+    "# embeddings = model.vocab.keys()\n",
+    "# wordsInVocab = len(embeddings)\n",
+    "# print (wordsInVocab)\n",
+<<<<<<< HEAD
+    "\n",
+    "# # embeddings = load_vectors(\"/scratch/mz2476/GoogleNews-vectors-negative300.bin\")\n",
+    "\n",
+    "# 2.5 million\n",
+    "embeddings = utils.load_vectors(PATH_TO_FOLDER + \"wiki.en.align.vec\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 25,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#Creating the weight matrix for pretrained word embeddings\n",
+    "vocab_size = len(index_to_word)\n",
+    "embed_dim = len(embeddings[\"apple\"])\n",
+    "weights_matrix = np.zeros((vocab_size,embed_dim))\n",
+=======
+>>>>>>> origin/master
+    "\n",
+    "# # embeddings = load_vectors(\"/scratch/mz2476/GoogleNews-vectors-negative300.bin\")\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+<<<<<<< HEAD
+   "execution_count": 26,
+=======
+   "execution_count": 11,
+>>>>>>> origin/master
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Total words in vocab: 682850\n",
+      "No. of words from vocab found in embeddings: 528314\n"
+     ]
+    }
+   ],
+   "source": [
+    "#Creating the weight matrix for pretrained word embeddings\n",
+    "weights_matrix_ve = utils.create_embeddings_matrix(word_to_index, embeddings)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Model"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import model\n",
+    "import importlib\n",
+    "importlib.reload(model)\n",
+    "\n",
+    "from model import FinalModel\n",
+    "from torchcontrib.optim import SWA"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "options = {\n",
+    "    \"VOCAB_SIZE\": len(index_to_word),\n",
+    "    \"dim_e\": weights_matrix_ve.shape[1],\n",
+    "    \"pretrained_embeddings\": weights_matrix_ve,\n",
+    "    \"num_layers\": 2,\n",
+    "    \"num_classes\": len(classes),\n",
+    "    \"mid_features\": 150,\n",
+    "    \"dropout_rate\": 0.2,\n",
+    "    \"activation\": nn.ReLU()\n",
+    "}\n",
+    "model = FinalModel(options)\n",
+    "\n",
+    "if torch.cuda.is_available():\n",
+    "    model = model.to(device)\n",
+    "    \n",
+    "# Criterion and Optimizer\n",
+    "criterion = torch.nn.BCEWithLogitsLoss()\n",
+    "# optimizer = torch.optim.Adam(model.parameters(), lr=0.001)\n",
+    "base_opt = torch.optim.Adam(model.parameters(), lr=0.001)\n",
+    "optimizer = SWA(base_opt)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 16,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "FinalModel(\n",
+       "  (layer_bag_of_words): BagOfWords(\n",
+       "    (embed_e): Embedding(682850, 300)\n",
+       "  )\n",
+       "  (layer_out): Sequential(\n",
+       "    (0): Linear(in_features=300, out_features=150, bias=True)\n",
+       "    (1): ReLU()\n",
+       "    (2): Linear(in_features=150, out_features=44, bias=True)\n",
+       "  )\n",
+       ")"
+      ]
+     },
+     "execution_count": 16,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "model"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Hyperparameter tuning"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Grid search vs. Random search"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "<ol>\n",
+    "    <li> dropout </li>\n",
+    "    <li> learning rate </li>\n",
+    "    <li> optimizer </li>\n",
+    "    <li> num of hidden layers </li>\n",
+    "    <li> dim of hidden layers </li>\n",
+    "    <li> take only first 500 words from the article </li>\n",
+    "    <li> TODO threshold </li>\n",
+    "<ol>"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "I focused on SWA optimizer."
+   ]
+  },
+  {
+   "cell_type": "code",
+<<<<<<< HEAD
+   "execution_count": 37,
+=======
+   "execution_count": 48,
+>>>>>>> origin/master
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# # one layer\n",
+    "# range_dropout = [0]\n",
+    "# range_num_hidden = [1]\n",
+    "# range_dim_hidden = [80, 120, 150]\n",
+    "# range_lr = [0.01]\n",
+    "\n",
+    "# # many layers\n",
+    "# range_dropout = [0, 0.1, 0.2]\n",
+    "# range_num_hidden = [3] # 2\n",
+    "# range_dim_hidden = [40, 80, 120]\n",
+    "# range_lr = [0.001, 0.01]\n",
+    "\n",
+    "# best hyperparams\n",
+    "range_dropout = [0.2]\n",
+    "range_num_hidden = [2]\n",
+    "range_dim_hidden = [120]\n",
+    "range_lr = [0.01]"
+   ]
+  },
+  {
+   "cell_type": "code",
+<<<<<<< HEAD
+   "execution_count": 38,
+=======
+   "execution_count": 49,
+>>>>>>> origin/master
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import model\n",
+    "import importlib\n",
+    "importlib.reload(model)\n",
+    "\n",
+    "from model import FinalModel\n",
+    "from torchcontrib.optim import SWA\n",
+    "import itertools"
+   ]
+  },
+  {
+   "cell_type": "code",
+<<<<<<< HEAD
+   "execution_count": 42,
+=======
+   "execution_count": 50,
+>>>>>>> origin/master
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import warnings\n",
+    "warnings.filterwarnings('ignore')\n",
+    "\n",
+    "from utils import test_model\n",
+    "\n",
+    "def train_model(wiki_loaders, model, criterion, optimizer, \n",
+    "                num_epochs=10, device=device, model_name=\"model\", save_model=False):\n",
+    "    best_val_f1_micro = 0\n",
+    "    best_metrics_dict = {}\n",
+    "    for epoch in range(num_epochs):\n",
+    "        runnin_loss = 0.0\n",
+    "        for i, (data, length, labels) in enumerate(wiki_loaders[\"train\"]):        \n",
+    "            model.train()\n",
+    "            data_batch, length_batch, label_batch = data.to(device),length.to(device), labels.float().to(device)\n",
+    "\n",
+    "            optimizer.zero_grad()\n",
+    "            outputs = model(data_batch, length_batch)\n",
+    "            loss = criterion(outputs, label_batch)\n",
+    "            loss.backward()\n",
+    "            optimizer.step()\n",
+    "\n",
+    "            runnin_loss += loss.item()\n",
+    "            #torch.nn.utils.clip_grad_norm(model.parameters(), 10)\n",
+    "            if i>0 and i % 1000 == 0:\n",
+    "                print('Epoch: [{}/{}], Step: [{}/{}], Train_loss: {}'.format(\n",
+    "                    epoch+1, num_epochs, i+1, len(wiki_loaders[\"train\"]), runnin_loss / i))\n",
+    "            # validate every 300 iterations\n",
+    "            if i > 0 and i % 1000 == 0:\n",
+    "                optimizer.update_swa()\n",
+    "                metrics_dict = test_model(wiki_loaders[\"val\"], model, device=device)\n",
+    "                print(\"Precision macro: {}, Recall macro: {}, F1 macro: {} \".format(\n",
+    "                    metrics_dict[\"precision_macro\"], metrics_dict[\"recall_macro\"], metrics_dict[\"f1_macro\"]\n",
+    "                ))\n",
+    "                print(\"Precision micro: {}, Recall micro: {}, F1 micro: {} \".format(\n",
+    "                    metrics_dict[\"precision_micro\"], metrics_dict[\"recall_micro\"], metrics_dict[\"f1_micro\"]\n",
+    "                ))\n",
+    "\n",
+    "                if metrics_dict[\"f1_micro\"] > best_val_f1_micro:\n",
+    "                    best_val_f1_micro = metrics_dict[\"f1_micro\"]\n",
+    "                    best_metrics_dict = metrics_dict\n",
+<<<<<<< HEAD
+    "                    if save_model:\n",
+    "                        optimizer.swap_swa_sgd()\n",
+    "                        torch.save(model.state_dict(), f\"../../baseline_models_params/{model_name}.pth\")\n",
+    "                        print('Model Saved')\n",
+    "                        print()\n",
+=======
+    "                    optimizer.swap_swa_sgd()\n",
+    "                    torch.save(model.state_dict(), f\"{PATH_TO_MODELS_FOLDER}en_{model_name}.pth\")\n",
+    "                    print('Model Saved')\n",
+    "                    print()\n",
+>>>>>>> origin/master
+    "    optimizer.swap_swa_sgd()\n",
+    "    return best_metrics_dict"
+   ]
+  },
+  {
+   "cell_type": "code",
+<<<<<<< HEAD
+   "execution_count": 43,
+=======
+   "execution_count": 25,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# results_df_without_best = results_df"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 52,
+>>>>>>> origin/master
+   "metadata": {
+    "scrolled": true
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      " {'optimizer': 'SWA', 'num_hidden': 2, 'dim_hidden': 120, 'dropout_rate': 0.2, 'learning_rate': 0.01, 'num_epochs': 10}\n",
+<<<<<<< HEAD
+      "Epoch: [1/10], Step: [1001/2499], Train_loss: 0.07928904701024293\n",
+      "Precision macro: 0.4670512747524935, Recall macro: 0.2556344769866677, F1 macro: 0.2998043658170084 \n",
+      "Precision micro: 0.8254851812847901, Recall micro: 0.641266873137381, F1 micro: 0.7218074785411254 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [1/10], Step: [2001/2499], Train_loss: 0.06521074903383851\n",
+      "Precision macro: 0.5513418170772652, Recall macro: 0.34172569419011417, F1 macro: 0.3947908330140031 \n",
+      "Precision micro: 0.8180641645664464, Recall micro: 0.7018056448314147, F1 micro: 0.7554884569415612 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [2/10], Step: [1001/2499], Train_loss: 0.04617469101585448\n",
+      "Precision macro: 0.5849650660993994, Recall macro: 0.421704079406314, F1 macro: 0.4658738328319751 \n",
+      "Precision micro: 0.8236686390532545, Recall micro: 0.7320750306784316, F1 micro: 0.7751755715744206 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [2/10], Step: [2001/2499], Train_loss: 0.04587682490516454\n",
+      "Precision macro: 0.6047026245641761, Recall macro: 0.4014893509453342, F1 macro: 0.45266248239703016 \n",
+      "Precision micro: 0.8349501297991528, Recall micro: 0.7141938876877227, F1 micro: 0.7698655160467386 \n",
+      "Epoch: [3/10], Step: [1001/2499], Train_loss: 0.04268197570182383\n",
+      "Precision macro: 0.6383066261173119, Recall macro: 0.453753510274394, F1 macro: 0.5108430265649907 \n",
+      "Precision micro: 0.837216978018351, Recall micro: 0.7411324723894116, F1 micro: 0.7862500774905462 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [3/10], Step: [2001/2499], Train_loss: 0.04306680440437049\n",
+      "Precision macro: 0.608489672592651, Recall macro: 0.42137342253640564, F1 macro: 0.4676007707316089 \n",
+      "Precision micro: 0.8264025107885445, Recall micro: 0.7385613276456495, F1 micro: 0.7800166630666213 \n",
+      "Epoch: [4/10], Step: [1001/2499], Train_loss: 0.04170264769718051\n",
+      "Precision macro: 0.6220930408125155, Recall macro: 0.45150698289096075, F1 macro: 0.5043948644222106 \n",
+      "Precision micro: 0.8452261306532663, Recall micro: 0.737158885058143, F1 micro: 0.787502340970098 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [4/10], Step: [2001/2499], Train_loss: 0.0415355846658349\n",
+      "Precision macro: 0.6730361245633952, Recall macro: 0.4931564507574729, F1 macro: 0.5478832847911628 \n",
+      "Precision micro: 0.8300583164300203, Recall micro: 0.7652077368082744, F1 micro: 0.7963148773146036 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [5/10], Step: [1001/2499], Train_loss: 0.040316337803378705\n",
+      "Precision macro: 0.6869966025109007, Recall macro: 0.5057949594924454, F1 macro: 0.5614807701536971 \n",
+      "Precision micro: 0.8349678508800416, Recall micro: 0.7512417460410215, F1 micro: 0.7908951091971701 \n",
+      "Epoch: [5/10], Step: [2001/2499], Train_loss: 0.040157628391869364\n",
+      "Precision macro: 0.7355093922756446, Recall macro: 0.5017628151357273, F1 macro: 0.5611795269107057 \n",
+      "Precision micro: 0.8407178543255325, Recall micro: 0.7473265938175656, F1 micro: 0.791276102088167 \n",
+      "Epoch: [6/10], Step: [1001/2499], Train_loss: 0.0390374801652506\n",
+      "Precision macro: 0.7068141200178544, Recall macro: 0.4650729020191712, F1 macro: 0.5342825905328786 \n",
+      "Precision micro: 0.8651274109531184, Recall micro: 0.7181674750189914, F1 micro: 0.7848271017593154 \n",
+      "Epoch: [6/10], Step: [2001/2499], Train_loss: 0.03912280011037365\n",
+      "Precision macro: 0.7022548824691469, Recall macro: 0.5179213104592274, F1 macro: 0.5706309394538889 \n",
+      "Precision micro: 0.8381480772909891, Recall micro: 0.7680126219832876, F1 micro: 0.8015490638531438 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [7/10], Step: [1001/2499], Train_loss: 0.03986510665714741\n",
+      "Precision macro: 0.6620525179843418, Recall macro: 0.5118661985408275, F1 macro: 0.554627136242843 \n",
+      "Precision micro: 0.8092502842098965, Recall micro: 0.7903348331677672, F1 micro: 0.7996807189735705 \n",
+      "Epoch: [7/10], Step: [2001/2499], Train_loss: 0.03963392532337457\n",
+      "Precision macro: 0.7118020377758165, Recall macro: 0.49386237664609745, F1 macro: 0.5584041163535894 \n",
+      "Precision micro: 0.8556559846617365, Recall micro: 0.7302051072284228, F1 micro: 0.7879685972822145 \n",
+      "Epoch: [8/10], Step: [1001/2499], Train_loss: 0.03855162894167006\n",
+      "Precision macro: 0.7065000626136096, Recall macro: 0.5012051020296732, F1 macro: 0.5570621852511652 \n",
+      "Precision micro: 0.8206791067604772, Recall micro: 0.7838485362005493, F1 micro: 0.8018411142327694 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [8/10], Step: [2001/2499], Train_loss: 0.038469857569783925\n",
+      "Precision macro: 0.754729759528125, Recall macro: 0.5040196702700276, F1 macro: 0.5697850157512294 \n",
+      "Precision micro: 0.8507085356929014, Recall micro: 0.74720972360194, F1 micro: 0.7956072672971627 \n",
+      "Epoch: [9/10], Step: [1001/2499], Train_loss: 0.03818271810002625\n",
+      "Precision macro: 0.7506177141595333, Recall macro: 0.5244255786206204, F1 macro: 0.5917124311355453 \n",
+      "Precision micro: 0.85261070720423, Recall micro: 0.7538128907847835, F1 micro: 0.8001736811090779 \n",
+      "Epoch: [9/10], Step: [2001/2499], Train_loss: 0.03819826085306704\n",
+      "Precision macro: 0.712815548222079, Recall macro: 0.5316218664296946, F1 macro: 0.5903180620745663 \n",
+      "Precision micro: 0.8412667822958824, Recall micro: 0.7652661719160871, F1 micro: 0.8014687882496939 \n",
+      "Epoch: [10/10], Step: [1001/2499], Train_loss: 0.03750091683492064\n",
+      "Precision macro: 0.7632415785656469, Recall macro: 0.5095350381813714, F1 macro: 0.5838058676185356 \n",
+      "Precision micro: 0.8587825374052059, Recall micro: 0.7345293052065681, F1 micro: 0.7918110236220472 \n",
+      "Epoch: [10/10], Step: [2001/2499], Train_loss: 0.03765036214049906\n",
+      "Precision macro: 0.6960512890166916, Recall macro: 0.5299293694343944, F1 macro: 0.5716920225296435 \n",
+      "Precision micro: 0.8379927853645968, Recall micro: 0.7601823175363759, F1 micro: 0.7971933694886173 \n",
+      "\n",
+      " {'optimizer': 'SWA', 'num_hidden': 2, 'dim_hidden': 150, 'dropout_rate': 0.2, 'learning_rate': 0.01, 'num_epochs': 10}\n",
+      "Epoch: [1/10], Step: [1001/2499], Train_loss: 0.07508861297741533\n",
+      "Precision macro: 0.5327846246194166, Recall macro: 0.26295155075864235, F1 macro: 0.30945934750469617 \n",
+      "Precision micro: 0.8264075067024129, Recall micro: 0.6484543913983521, F1 micro: 0.7266952621066763 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [1/10], Step: [2001/2499], Train_loss: 0.062113368597812954\n",
+      "Precision macro: 0.5875281910123126, Recall macro: 0.3808443814460862, F1 macro: 0.4308217151315961 \n",
+      "Precision micro: 0.8467003588954809, Recall micro: 0.6755098463156665, F1 micro: 0.7514789052850549 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [2/10], Step: [1001/2499], Train_loss: 0.044652051873505114\n",
+      "Precision macro: 0.6250319940734553, Recall macro: 0.40984475162863543, F1 macro: 0.46686391468020044 \n",
+      "Precision micro: 0.8325865580448065, Recall micro: 0.7166481622158593, F1 micro: 0.7702791822378545 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [2/10], Step: [2001/2499], Train_loss: 0.044603979366831484\n",
+      "Precision macro: 0.6530962967097514, Recall macro: 0.43320583277281843, F1 macro: 0.48193778451393227 \n",
+      "Precision micro: 0.8072082028611777, Recall micro: 0.7682463624145387, F1 micro: 0.787245508982036 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [3/10], Step: [1001/2499], Train_loss: 0.04211077832058072\n",
+      "Precision macro: 0.6440129802232368, Recall macro: 0.4528644051184637, F1 macro: 0.4985251189353205 \n",
+      "Precision micro: 0.8453203304889612, Recall micro: 0.729387015719044, F1 micro: 0.7830860441042693 \n",
+      "Epoch: [3/10], Step: [2001/2499], Train_loss: 0.041774912728928026\n",
+      "Precision macro: 0.6395237109857205, Recall macro: 0.4897133065608909, F1 macro: 0.5304615905305945 \n",
+      "Precision micro: 0.8202913172331169, Recall micro: 0.7601823175363759, F1 micro: 0.7890937765376683 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [4/10], Step: [1001/2499], Train_loss: 0.04096769217401743\n",
+      "Precision macro: 0.6906276140707144, Recall macro: 0.4814880187848459, F1 macro: 0.5423265443861222 \n",
+      "Precision micro: 0.8189261828864304, Recall micro: 0.7656167825629638, F1 micro: 0.7913747281952164 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [4/10], Step: [2001/2499], Train_loss: 0.04066670590545982\n",
+      "Precision macro: 0.686211219630605, Recall macro: 0.46431555873323477, F1 macro: 0.5242874239220267 \n",
+      "Precision micro: 0.839678704368837, Recall micro: 0.751358616256647, F1 micro: 0.7930672916795165 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [5/10], Step: [1001/2499], Train_loss: 0.03985526420362294\n",
+      "Precision macro: 0.6630051126531874, Recall macro: 0.47444665202472613, F1 macro: 0.5341376517488077 \n",
+      "Precision micro: 0.8405952540555034, Recall micro: 0.7327762519721849, F1 micro: 0.7829914770066498 \n"
+=======
+      "Epoch: [1/10], Step: [1001/2499], Train_loss: 0.07884886454045772\n",
+      "Precision macro: 0.48278520281296733, Recall macro: 0.24427291639746673, F1 macro: 0.2848108113092483 \n",
+      "Precision micro: 0.8305071799572258, Recall micro: 0.6353649272482907, F1 micro: 0.7199470286376427 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [1/10], Step: [2001/2499], Train_loss: 0.06491451930720359\n",
+      "Precision macro: 0.5506346016000201, Recall macro: 0.39709446314405733, F1 macro: 0.43670556381221937 \n",
+      "Precision micro: 0.8178386968613429, Recall micro: 0.7217320165955706, F1 micro: 0.766785658854571 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [2/10], Step: [1001/2499], Train_loss: 0.04603251419588923\n",
+      "Precision macro: 0.5799178912367894, Recall macro: 0.4350325971207185, F1 macro: 0.47757937974590453 \n",
+      "Precision micro: 0.8240947992100066, Recall micro: 0.7314906796003039, F1 micro: 0.7750363743305576 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [2/10], Step: [2001/2499], Train_loss: 0.04568742338847369\n",
+      "Precision macro: 0.5998461252033623, Recall macro: 0.42353972913888444, F1 macro: 0.47257601324627796 \n",
+      "Precision micro: 0.832708277524779, Recall micro: 0.7265821305440309, F1 micro: 0.7760337026057107 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [3/10], Step: [1001/2499], Train_loss: 0.042324450623244046\n",
+      "Precision macro: 0.6049880796293972, Recall macro: 0.45507207629270713, F1 macro: 0.49677944309313626 \n",
+      "Precision micro: 0.8066020593579649, Recall micro: 0.7781803307427102, F1 micro: 0.7921363352467062 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [3/10], Step: [2001/2499], Train_loss: 0.042795386868529024\n",
+      "Precision macro: 0.6491919767553758, Recall macro: 0.4477065740780837, F1 macro: 0.5035272202312636 \n",
+      "Precision micro: 0.8421123899796885, Recall micro: 0.726815870975282, F1 micro: 0.7802277075557507 \n",
+      "Epoch: [4/10], Step: [1001/2499], Train_loss: 0.041213168079033496\n",
+      "Precision macro: 0.6779490105452798, Recall macro: 0.4676783212056855, F1 macro: 0.5266815052665934 \n",
+      "Precision micro: 0.8423873486402434, Recall micro: 0.7439373575644247, F1 micro: 0.7901073667225221 \n",
+      "Epoch: [4/10], Step: [2001/2499], Train_loss: 0.04098927391599864\n",
+      "Precision macro: 0.7091365217618241, Recall macro: 0.49963085202827356, F1 macro: 0.5603502880078491 \n",
+      "Precision micro: 0.8270833333333333, Recall micro: 0.7655583474551511, F1 micro: 0.795132461384396 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [5/10], Step: [1001/2499], Train_loss: 0.04104133003950119\n",
+      "Precision macro: 0.6350521085386593, Recall macro: 0.4864559197945024, F1 macro: 0.5348866267079676 \n",
+      "Precision micro: 0.8396560777106852, Recall micro: 0.7475603342488167, F1 micro: 0.7909363504281431 \n",
+      "Epoch: [5/10], Step: [2001/2499], Train_loss: 0.040843296344392\n",
+      "Precision macro: 0.6990001861793457, Recall macro: 0.486463082950875, F1 macro: 0.5441607381385284 \n",
+      "Precision micro: 0.8530068321720896, Recall micro: 0.7368667095190791, F1 micro: 0.7906947579633811 \n",
+      "Epoch: [6/10], Step: [1001/2499], Train_loss: 0.03969754467345774\n",
+      "Precision macro: 0.7077149154774406, Recall macro: 0.530619353658873, F1 macro: 0.5788815088188025 \n",
+      "Precision micro: 0.8359168241965974, Recall micro: 0.7752001402442588, F1 micro: 0.8044143952945457 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [6/10], Step: [2001/2499], Train_loss: 0.039595012919045984\n",
+      "Precision macro: 0.6852044357556163, Recall macro: 0.4947729811512129, F1 macro: 0.5549402605659272 \n",
+      "Precision micro: 0.84253910560135, Recall micro: 0.7585461345176182, F1 micro: 0.7983394833948341 \n",
+      "Epoch: [7/10], Step: [1001/2499], Train_loss: 0.03921786212734878\n",
+      "Precision macro: 0.7328285963557011, Recall macro: 0.4934025834046912, F1 macro: 0.5602255360712859 \n",
+      "Precision micro: 0.829725465446513, Recall micro: 0.7682463624145387, F1 micro: 0.7978032647612112 \n",
+      "Epoch: [7/10], Step: [2001/2499], Train_loss: 0.03912620823457837\n",
+      "Precision macro: 0.7381535194492753, Recall macro: 0.5107193050262103, F1 macro: 0.5753260352693276 \n",
+      "Precision micro: 0.8271313005600498, Recall micro: 0.7767194530473909, F1 micro: 0.8011331103275774 \n",
+      "Epoch: [8/10], Step: [1001/2499], Train_loss: 0.038420354846864936\n",
+      "Precision macro: 0.7227796437984895, Recall macro: 0.5351473456005441, F1 macro: 0.5830636746942482 \n",
+      "Precision micro: 0.8243259955478605, Recall micro: 0.778998422252089, F1 micro: 0.8010214811476641 \n",
+      "Epoch: [8/10], Step: [2001/2499], Train_loss: 0.03820322468690574\n",
+      "Precision macro: 0.7373818275303556, Recall macro: 0.5183955819786193, F1 macro: 0.5816550253656785 \n",
+      "Precision micro: 0.8563341387642389, Recall micro: 0.7248290773096476, F1 micro: 0.7851129818342933 \n",
+      "Epoch: [9/10], Step: [1001/2499], Train_loss: 0.03767920279316604\n",
+      "Precision macro: 0.730109909267999, Recall macro: 0.5210328998293883, F1 macro: 0.5767924827239702 \n",
+      "Precision micro: 0.8420112302194998, Recall micro: 0.7711096826973646, F1 micro: 0.8050022876315388 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [9/10], Step: [2001/2499], Train_loss: 0.03823179210536182\n",
+      "Precision macro: 0.727115954066544, Recall macro: 0.5079649224148803, F1 macro: 0.568533267674754 \n",
+      "Precision micro: 0.8494806297772262, Recall micro: 0.7598317068894992, F1 micro: 0.8021591610117211 \n",
+      "Epoch: [10/10], Step: [1001/2499], Train_loss: 0.038162963898852466\n",
+      "Precision macro: 0.7238957418123616, Recall macro: 0.5106541377940188, F1 macro: 0.5708093507109265 \n",
+      "Precision micro: 0.8442915557863309, Recall micro: 0.7601238824285631, F1 micro: 0.7999999999999999 \n",
+      "Epoch: [10/10], Step: [2001/2499], Train_loss: 0.038348657907918096\n",
+      "Precision macro: 0.7143548517540389, Recall macro: 0.5587128581209995, F1 macro: 0.6059718548525876 \n",
+      "Precision micro: 0.8342105263157895, Recall micro: 0.7780050254192719, F1 micro: 0.805128050071055 \n",
+      "Model Saved\n",
+      "\n",
+      "\n",
+      " {'optimizer': 'SWA', 'num_hidden': 2, 'dim_hidden': 150, 'dropout_rate': 0.2, 'learning_rate': 0.01, 'num_epochs': 10}\n",
+      "Epoch: [1/10], Step: [1001/2499], Train_loss: 0.07306841377913952\n",
+      "Precision macro: 0.5243166666426988, Recall macro: 0.28494422260335467, F1 macro: 0.3389049542312716 \n",
+      "Precision micro: 0.8369728915662651, Recall micro: 0.6495062233389821, F1 micro: 0.7314184187148356 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [1/10], Step: [2001/2499], Train_loss: 0.061132249581627544\n",
+      "Precision macro: 0.635437117058321, Recall macro: 0.3654957108813121, F1 macro: 0.42501692885872394 \n",
+      "Precision micro: 0.859077380952381, Recall micro: 0.6746917548062876, F1 micro: 0.7558013942984323 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [2/10], Step: [1001/2499], Train_loss: 0.044869204943999645\n",
+      "Precision macro: 0.5725120985206039, Recall macro: 0.42826564092383884, F1 macro: 0.47987074566623655 \n",
+      "Precision micro: 0.8450665568821188, Recall micro: 0.7196867878221236, F1 micro: 0.7773534888124467 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [2/10], Step: [2001/2499], Train_loss: 0.04434390817396343\n",
+      "Precision macro: 0.6299566262113747, Recall macro: 0.4352115485199766, F1 macro: 0.47664241429510523 \n",
+      "Precision micro: 0.8277195281782438, Recall micro: 0.7380938467831473, F1 micro: 0.7803416427269638 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [3/10], Step: [1001/2499], Train_loss: 0.04229024590924382\n",
+      "Precision macro: 0.6790890071179843, Recall macro: 0.5057031299711618, F1 macro: 0.5503956249582312 \n",
+      "Precision micro: 0.8150285468721223, Recall micro: 0.7757844913223865, F1 micro: 0.7949224597329502 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [3/10], Step: [2001/2499], Train_loss: 0.041747743673622606\n",
+      "Precision macro: 0.6708366406187684, Recall macro: 0.46856031565873396, F1 macro: 0.5245422677853512 \n",
+      "Precision micro: 0.8427534784634845, Recall micro: 0.7397300298019049, F1 micro: 0.7878882180867617 \n",
+      "Epoch: [4/10], Step: [1001/2499], Train_loss: 0.04040224212966859\n",
+      "Precision macro: 0.6564456540859792, Recall macro: 0.5038249880229168, F1 macro: 0.5478170837271041 \n",
+      "Precision micro: 0.8243996038623421, Recall micro: 0.7782972009583358, F1 micro: 0.8006853226727584 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [4/10], Step: [2001/2499], Train_loss: 0.04024867432657629\n",
+      "Precision macro: 0.6698469781207861, Recall macro: 0.46952406918724476, F1 macro: 0.5334865815489959 \n",
+      "Precision micro: 0.8379196840026333, Recall micro: 0.7437620522409863, F1 micro: 0.7880382627000588 \n",
+      "Epoch: [5/10], Step: [1001/2499], Train_loss: 0.039786267459392545\n",
+      "Precision macro: 0.7113180982215703, Recall macro: 0.5334952164611697, F1 macro: 0.5769109417124747 \n",
+      "Precision micro: 0.8192086982784658, Recall micro: 0.7924969321568398, F1 micro: 0.8056314601401925 \n"
+>>>>>>> origin/master
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+<<<<<<< HEAD
+      "Epoch: [5/10], Step: [2001/2499], Train_loss: 0.0397099956907332\n",
+      "Precision macro: 0.7170223563840179, Recall macro: 0.48907240981954225, F1 macro: 0.5430327958961562 \n",
+      "Precision micro: 0.8310722100656455, Recall micro: 0.7767778881552037, F1 micro: 0.8030083363537512 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [6/10], Step: [1001/2499], Train_loss: 0.0389523807503283\n",
+      "Precision macro: 0.6772916965637377, Recall macro: 0.49613505711887806, F1 macro: 0.5501839407146716 \n",
+      "Precision micro: 0.8443261490521943, Recall micro: 0.7600070122129375, F1 micro: 0.7999507949687855 \n",
+      "Epoch: [6/10], Step: [2001/2499], Train_loss: 0.03909501453023404\n",
+      "Precision macro: 0.688544465771505, Recall macro: 0.4950216313628479, F1 macro: 0.5553492912566844 \n",
+      "Precision micro: 0.8408571241915463, Recall micro: 0.7521182726582131, F1 micro: 0.7940160394818014 \n",
+      "Epoch: [7/10], Step: [1001/2499], Train_loss: 0.037911234153434635\n",
+      "Precision macro: 0.72330736074817, Recall macro: 0.5057970581777096, F1 macro: 0.5674313047814954 \n",
+      "Precision micro: 0.8433609282315364, Recall micro: 0.7560334248816689, F1 micro: 0.7973131201084612 \n",
+      "Epoch: [7/10], Step: [2001/2499], Train_loss: 0.03811253985017538\n",
+      "Precision macro: 0.735404748494762, Recall macro: 0.5247356868127242, F1 macro: 0.5883627818796991 \n",
+      "Precision micro: 0.8163521261347348, Recall micro: 0.7987494886928066, F1 micro: 0.8074548837758808 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [8/10], Step: [1001/2499], Train_loss: 0.03843437322415411\n",
+      "Precision macro: 0.7210289853395431, Recall macro: 0.5388087929788444, F1 macro: 0.592202514637762 \n",
+      "Precision micro: 0.8270486752926679, Recall micro: 0.7843744521708642, F1 micro: 0.8051465075128214 \n",
+      "Epoch: [8/10], Step: [2001/2499], Train_loss: 0.0383975744433701\n",
+      "Precision macro: 0.6992898851374332, Recall macro: 0.5102767841956677, F1 macro: 0.5663740364499792 \n",
+      "Precision micro: 0.840703453549127, Recall micro: 0.770992812481739, F1 micro: 0.804340537080501 \n",
+      "Epoch: [9/10], Step: [1001/2499], Train_loss: 0.03774346977099776\n",
+      "Precision macro: 0.6931379881340025, Recall macro: 0.5312588777323901, F1 macro: 0.582146225826629 \n",
+      "Precision micro: 0.8481570253287556, Recall micro: 0.7650908665926489, F1 micro: 0.8044854070660522 \n",
+      "Epoch: [9/10], Step: [2001/2499], Train_loss: 0.037587121571414174\n",
+      "Precision macro: 0.7127278209740692, Recall macro: 0.5479352005530874, F1 macro: 0.6013516496910886 \n",
+      "Precision micro: 0.8315769898338705, Recall micro: 0.7839069713083621, F1 micro: 0.8070386524289367 \n",
+      "Epoch: [10/10], Step: [1001/2499], Train_loss: 0.03663988929614425\n",
+      "Precision macro: 0.709481809023517, Recall macro: 0.5721970619476768, F1 macro: 0.6197288390483818 \n",
+      "Precision micro: 0.8252005142962101, Recall micro: 0.7875883831005668, F1 micro: 0.8059558691622316 \n",
+      "Epoch: [10/10], Step: [2001/2499], Train_loss: 0.03693692010641098\n",
+      "Precision macro: 0.7170095004407719, Recall macro: 0.5671773638833967, F1 macro: 0.6194870803653243 \n",
+      "Precision micro: 0.8413715146948003, Recall micro: 0.7829135744755449, F1 micro: 0.8110905953930441 \n",
+      "Model Saved\n",
+      "\n",
+      "\n",
+      " {'optimizer': 'SWA', 'num_hidden': 2, 'dim_hidden': 200, 'dropout_rate': 0.2, 'learning_rate': 0.01, 'num_epochs': 10}\n",
+      "Epoch: [1/10], Step: [1001/2499], Train_loss: 0.07158189982734621\n",
+      "Precision macro: 0.543242749632403, Recall macro: 0.29821036074462737, F1 macro: 0.35331468480445777 \n",
+      "Precision micro: 0.8290805103387594, Recall micro: 0.6607257640390346, F1 micro: 0.735390719001008 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [1/10], Step: [2001/2499], Train_loss: 0.05979512958042323\n",
+      "Precision macro: 0.5905997554752749, Recall macro: 0.38499800151868135, F1 macro: 0.44029936240934775 \n",
+      "Precision micro: 0.8403041825095057, Recall micro: 0.7102787354642669, F1 micro: 0.7698397618595225 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [2/10], Step: [1001/2499], Train_loss: 0.044194696195423606\n",
+      "Precision macro: 0.6498879312402979, Recall macro: 0.4259821101224071, F1 macro: 0.4794968384315629 \n",
+      "Precision micro: 0.8294456820862273, Recall micro: 0.7397300298019049, F1 micro: 0.782023166023166 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [2/10], Step: [2001/2499], Train_loss: 0.04376225086394697\n",
+      "Precision macro: 0.6475281810369894, Recall macro: 0.4481308030091057, F1 macro: 0.4986893244884264 \n",
+      "Precision micro: 0.8153396730685561, Recall micro: 0.7665517442879682, F1 micro: 0.790193361845672 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [3/10], Step: [1001/2499], Train_loss: 0.04150185792148113\n",
+      "Precision macro: 0.6453549213151687, Recall macro: 0.4758368578031076, F1 macro: 0.5247897863329039 \n",
+      "Precision micro: 0.8474172185430463, Recall micro: 0.747735639572255, F1 micro: 0.7944618632229223 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [3/10], Step: [2001/2499], Train_loss: 0.04147170973476023\n",
+      "Precision macro: 0.640170664821529, Recall macro: 0.450704309953551, F1 macro: 0.507775439574046 \n",
+      "Precision micro: 0.8359889386357651, Recall micro: 0.7419505638987904, F1 micro: 0.786167610909879 \n",
+      "Epoch: [4/10], Step: [1001/2499], Train_loss: 0.039839284092187885\n",
+      "Precision macro: 0.6930068255194137, Recall macro: 0.5168092703000212, F1 macro: 0.5669622286788644 \n",
+      "Precision micro: 0.8437744714173845, Recall micro: 0.7555659440191668, F1 micro: 0.797237722354102 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [4/10], Step: [2001/2499], Train_loss: 0.039918805623427034\n",
+      "Precision macro: 0.7123232953022991, Recall macro: 0.5121571000894182, F1 macro: 0.5638287093214963 \n",
+      "Precision micro: 0.8220412193014933, Recall micro: 0.7784725062817741, F1 micro: 0.7996638554578469 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [5/10], Step: [1001/2499], Train_loss: 0.03900393402017653\n",
+      "Precision macro: 0.7103583057084139, Recall macro: 0.503471057033955, F1 macro: 0.5669297529574592 \n",
+      "Precision micro: 0.8634944856766318, Recall micro: 0.7274586571612225, F1 micro: 0.7896606406596891 \n",
+      "Epoch: [5/10], Step: [2001/2499], Train_loss: 0.038852011450566354\n",
+      "Precision macro: 0.7268057442280946, Recall macro: 0.4797824314875058, F1 macro: 0.5486400046706502 \n",
+      "Precision micro: 0.8491225755376699, Recall micro: 0.7521182726582131, F1 micro: 0.7976821294660841 \n",
+      "Epoch: [6/10], Step: [1001/2499], Train_loss: 0.03798630561493337\n",
+      "Precision macro: 0.7043151684837129, Recall macro: 0.5501048782265049, F1 macro: 0.5984487118165046 \n",
+      "Precision micro: 0.8213958600476278, Recall micro: 0.7860690702974347, F1 micro: 0.8033442818751866 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [6/10], Step: [2001/2499], Train_loss: 0.03832140597980469\n",
+      "Precision macro: 0.7045892760093275, Recall macro: 0.49830432456918916, F1 macro: 0.5612182126139401 \n",
+      "Precision micro: 0.8525292357900462, Recall micro: 0.7327178168643721, F1 micro: 0.7880959115049809 \n",
+      "Epoch: [7/10], Step: [1001/2499], Train_loss: 0.038324132878333333\n",
+      "Precision macro: 0.722727199534864, Recall macro: 0.562173955893958, F1 macro: 0.6137245387164186 \n",
+      "Precision micro: 0.8237724842002917, Recall micro: 0.7921463215099632, F1 micro: 0.8076499151002413 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [7/10], Step: [2001/2499], Train_loss: 0.03784672850649804\n",
+      "Precision macro: 0.7226701468960793, Recall macro: 0.5126765799834594, F1 macro: 0.5749636637900452 \n",
+      "Precision micro: 0.8361422620954823, Recall micro: 0.762461286741074, F1 micro: 0.7976037655113393 \n",
+      "Epoch: [8/10], Step: [1001/2499], Train_loss: 0.037146882742643356\n",
+      "Precision macro: 0.6863242835169086, Recall macro: 0.536295505743624, F1 macro: 0.5849759280797566 \n",
+      "Precision micro: 0.8450640445076982, Recall micro: 0.7633378133582657, F1 micro: 0.802124589358632 \n",
+      "Epoch: [8/10], Step: [2001/2499], Train_loss: 0.036973619252443315\n",
+      "Precision macro: 0.7234633032571227, Recall macro: 0.5287729177836383, F1 macro: 0.5902575928386276 \n",
+      "Precision micro: 0.8362156021206766, Recall micro: 0.7742067434114416, F1 micro: 0.8040173559486603 \n",
+      "Epoch: [9/10], Step: [1001/2499], Train_loss: 0.03646438997611404\n",
+      "Precision macro: 0.747194433280514, Recall macro: 0.540174413671551, F1 macro: 0.5971469257352678 \n",
+      "Precision micro: 0.8229946193332921, Recall micro: 0.7775959796645825, F1 micro: 0.7996514632534103 \n",
+      "Epoch: [9/10], Step: [2001/2499], Train_loss: 0.036533339489251374\n",
+      "Precision macro: 0.723463315051898, Recall macro: 0.5844595105450712, F1 macro: 0.6260281911383245 \n",
+      "Precision micro: 0.841099691027177, Recall micro: 0.7794659031145913, F1 micro: 0.8091107606453961 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [10/10], Step: [1001/2499], Train_loss: 0.03721501465886831\n",
+      "Precision macro: 0.708675561071297, Recall macro: 0.5356044452018085, F1 macro: 0.5842758872956584 \n",
+      "Precision micro: 0.8332917550205813, Recall micro: 0.7807514754864723, F1 micro: 0.8061664705704891 \n"
+=======
+      "Model Saved\n",
+      "\n",
+      "Epoch: [5/10], Step: [2001/2499], Train_loss: 0.03947996575478464\n",
+      "Precision macro: 0.7253816674467741, Recall macro: 0.5097362793442843, F1 macro: 0.5735923876795123 \n",
+      "Precision micro: 0.8418758943671133, Recall micro: 0.7563256004207328, F1 micro: 0.7968110321051497 \n",
+      "Epoch: [6/10], Step: [1001/2499], Train_loss: 0.03841240977682173\n",
+      "Precision macro: 0.7075381847336066, Recall macro: 0.523968018207935, F1 macro: 0.5783681344736877 \n",
+      "Precision micro: 0.8342162667497662, Recall micro: 0.7821539180739788, F1 micro: 0.8073466433439893 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [6/10], Step: [2001/2499], Train_loss: 0.03868044700101018\n",
+      "Precision macro: 0.6810137914670901, Recall macro: 0.48864109311523535, F1 macro: 0.5417693721536959 \n",
+      "Precision micro: 0.8557554202858901, Recall micro: 0.7311400689534272, F1 micro: 0.788554862292809 \n",
+      "Epoch: [7/10], Step: [1001/2499], Train_loss: 0.03814954659622163\n",
+      "Precision macro: 0.7410328168074493, Recall macro: 0.5176111411375822, F1 macro: 0.5740277994388661 \n",
+      "Precision micro: 0.8294368021713652, Recall micro: 0.7857184596505581, F1 micro: 0.806985956067699 \n",
+      "Epoch: [7/10], Step: [2001/2499], Train_loss: 0.03815544887678698\n",
+      "Precision macro: 0.7403670074363965, Recall macro: 0.5134169401556377, F1 macro: 0.5719633215904514 \n",
+      "Precision micro: 0.8479413497414414, Recall micro: 0.7569683866066733, F1 micro: 0.799876505094165 \n",
+      "Epoch: [8/10], Step: [1001/2499], Train_loss: 0.0372751427013427\n",
+      "Precision macro: 0.7142050595952085, Recall macro: 0.553560227618584, F1 macro: 0.6046047653861785 \n",
+      "Precision micro: 0.8416223740825107, Recall micro: 0.7772453690177058, F1 micro: 0.8081538414800862 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [8/10], Step: [2001/2499], Train_loss: 0.03767990745510906\n",
+      "Precision macro: 0.7104631881556683, Recall macro: 0.5406514230093734, F1 macro: 0.5929445762485256 \n",
+      "Precision micro: 0.8364395686592283, Recall micro: 0.7841407117396132, F1 micro: 0.8094462540716613 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [9/10], Step: [1001/2499], Train_loss: 0.03729407538753003\n",
+      "Precision macro: 0.7183717783466832, Recall macro: 0.5308486067979122, F1 macro: 0.5808597427586935 \n",
+      "Precision micro: 0.8332393660339535, Recall micro: 0.7772453690177058, F1 micro: 0.8042689563429677 \n",
+      "Epoch: [9/10], Step: [2001/2499], Train_loss: 0.0371951974905096\n",
+      "Precision macro: 0.7163666240578768, Recall macro: 0.5572144272944922, F1 macro: 0.606316244568881 \n",
+      "Precision micro: 0.8479386511109654, Recall micro: 0.7559749897738561, F1 micro: 0.799320358356503 \n",
+      "Epoch: [10/10], Step: [1001/2499], Train_loss: 0.03646156732551754\n",
+      "Precision macro: 0.71484203761818, Recall macro: 0.5570713157047569, F1 macro: 0.6015199854413014 \n",
+      "Precision micro: 0.8227855687402613, Recall micro: 0.8022555951615731, F1 micro: 0.8123908991390278 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [10/10], Step: [2001/2499], Train_loss: 0.036901586799882355\n",
+      "Precision macro: 0.7272546378830642, Recall macro: 0.5168333054481251, F1 macro: 0.581857843284974 \n",
+      "Precision micro: 0.8527386028205969, Recall micro: 0.7596564015660608, F1 micro: 0.8035107237777366 \n",
+      "\n",
+      " {'optimizer': 'SWA', 'num_hidden': 2, 'dim_hidden': 200, 'dropout_rate': 0.2, 'learning_rate': 0.01, 'num_epochs': 10}\n",
+      "Epoch: [1/10], Step: [1001/2499], Train_loss: 0.07266030113399029\n",
+      "Precision macro: 0.5385545954300874, Recall macro: 0.30595873711286203, F1 macro: 0.35495576444933463 \n",
+      "Precision micro: 0.8194434660091582, Recall micro: 0.6797171740781862, F1 micro: 0.7430688641880671 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [1/10], Step: [2001/2499], Train_loss: 0.06013128186017275\n",
+      "Precision macro: 0.5929872875426428, Recall macro: 0.36056592024551304, F1 macro: 0.4219190851742374 \n",
+      "Precision micro: 0.8551033924497755, Recall micro: 0.6790159527844329, F1 micro: 0.7569539443684451 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [2/10], Step: [1001/2499], Train_loss: 0.04408219688944519\n",
+      "Precision macro: 0.6093872694235922, Recall macro: 0.4265890998800581, F1 macro: 0.48510831191947806 \n",
+      "Precision micro: 0.8525252525252526, Recall micro: 0.7151288494127271, F1 micro: 0.7778060251684251 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [2/10], Step: [2001/2499], Train_loss: 0.04349433800764382\n",
+      "Precision macro: 0.6718018435689931, Recall macro: 0.4713341950077053, F1 macro: 0.5300281931234252 \n",
+      "Precision micro: 0.8333441960503161, Recall micro: 0.7471512884941273, F1 micro: 0.7878974611782106 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [3/10], Step: [1001/2499], Train_loss: 0.04120756959542632\n",
+      "Precision macro: 0.6484776456904684, Recall macro: 0.5110271093433248, F1 macro: 0.5530459041012471 \n",
+      "Precision micro: 0.8174578866768759, Recall micro: 0.7798165137614679, F1 micro: 0.7981936718703272 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [3/10], Step: [2001/2499], Train_loss: 0.04106992219947279\n",
+      "Precision macro: 0.673172068560685, Recall macro: 0.44538579297518516, F1 macro: 0.5075092604179159 \n",
+      "Precision micro: 0.8543050893896842, Recall micro: 0.7288026646409163, F1 micro: 0.7865792129162462 \n",
+      "Epoch: [4/10], Step: [1001/2499], Train_loss: 0.03961515498161316\n",
+      "Precision macro: 0.7165594423222982, Recall macro: 0.47517688534858055, F1 macro: 0.5379647305194033 \n",
+      "Precision micro: 0.8348327420172327, Recall micro: 0.7699994156489218, F1 micro: 0.8011064838739095 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [4/10], Step: [2001/2499], Train_loss: 0.03983724975865334\n",
+      "Precision macro: 0.665201704880004, Recall macro: 0.4792693091989932, F1 macro: 0.5312633570153479 \n",
+      "Precision micro: 0.8263802148388708, Recall micro: 0.7732133465786244, F1 micro: 0.7989132075471699 \n",
+      "Epoch: [5/10], Step: [1001/2499], Train_loss: 0.03878578617051244\n",
+      "Precision macro: 0.690529419268466, Recall macro: 0.5037148663159932, F1 macro: 0.5576478793273443 \n",
+      "Precision micro: 0.8557653676175171, Recall micro: 0.7468006778472507, F1 micro: 0.7975785564951478 \n",
+      "Epoch: [5/10], Step: [2001/2499], Train_loss: 0.038720234220847485\n",
+      "Precision macro: 0.6937835748994527, Recall macro: 0.5254725471746284, F1 macro: 0.5749214256340667 \n",
+      "Precision micro: 0.8260097919216646, Recall micro: 0.7886986501490095, F1 micro: 0.8069231459061967 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [6/10], Step: [1001/2499], Train_loss: 0.038339634474366904\n",
+      "Precision macro: 0.7326464199629904, Recall macro: 0.5071667652062687, F1 macro: 0.5676036003749044 \n",
+      "Precision micro: 0.8461237785016287, Recall micro: 0.7589551802723076, F1 micro: 0.8001725040815698 \n",
+      "Epoch: [6/10], Step: [2001/2499], Train_loss: 0.038394959622994065\n",
+      "Precision macro: 0.7372404862366676, Recall macro: 0.5223994345532079, F1 macro: 0.5874456099273956 \n",
+      "Precision micro: 0.8538733569093214, Recall micro: 0.7477940746800678, F1 micro: 0.7973208722741433 \n",
+      "Epoch: [7/10], Step: [1001/2499], Train_loss: 0.03726870928704738\n",
+      "Precision macro: 0.7014664894142452, Recall macro: 0.5327194690008038, F1 macro: 0.5859364790177247 \n",
+      "Precision micro: 0.8369606003752346, Recall micro: 0.7820370478583533, F1 micro: 0.8085671993474911 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [7/10], Step: [2001/2499], Train_loss: 0.03753591725230217\n",
+      "Precision macro: 0.7339826402567401, Recall macro: 0.5322832255698489, F1 macro: 0.5814976246333216 \n",
+      "Precision micro: 0.8184444979532868, Recall micro: 0.7944837258224742, F1 micro: 0.8062861378799111 \n",
+      "Epoch: [8/10], Step: [1001/2499], Train_loss: 0.03700271695666015\n",
+      "Precision macro: 0.7094082961539957, Recall macro: 0.5547079838314267, F1 macro: 0.6030618295788336 \n",
+      "Precision micro: 0.8140142517814727, Recall micro: 0.8010284578975049, F1 micro: 0.8074691485288487 \n",
+      "Epoch: [8/10], Step: [2001/2499], Train_loss: 0.03714243729971349\n",
+      "Precision macro: 0.7278926788397387, Recall macro: 0.5411213709112919, F1 macro: 0.5971612184379528 \n",
+      "Precision micro: 0.8460146098648911, Recall micro: 0.7647402559457722, F1 micro: 0.8033269903627771 \n",
+      "Epoch: [9/10], Step: [1001/2499], Train_loss: 0.03635337165184319\n",
+      "Precision macro: 0.7104286844312645, Recall macro: 0.5864280488200667, F1 macro: 0.6303092766294992 \n",
+      "Precision micro: 0.8441098317094774, Recall micro: 0.7796412084380295, F1 micro: 0.8105957046082809 \n",
+      "Model Saved\n",
+      "\n",
+      "Epoch: [9/10], Step: [2001/2499], Train_loss: 0.0366673717321828\n",
+      "Precision macro: 0.7434403393744361, Recall macro: 0.5150373434475234, F1 macro: 0.5788408817913508 \n",
+      "Precision micro: 0.8351572759677318, Recall micro: 0.7804008648395956, F1 micro: 0.8068511358144032 \n",
+      "Epoch: [10/10], Step: [1001/2499], Train_loss: 0.03653469828795642\n",
+      "Precision macro: 0.7494701940514014, Recall macro: 0.5768361709179992, F1 macro: 0.6308736474515659 \n",
+      "Precision micro: 0.8349460708782742, Recall micro: 0.7916204055396482, F1 micro: 0.8127062211290419 \n"
+>>>>>>> origin/master
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+<<<<<<< HEAD
+      "Epoch: [10/10], Step: [2001/2499], Train_loss: 0.03734443296585232\n",
+      "Precision macro: 0.7454165274001323, Recall macro: 0.5212493326605562, F1 macro: 0.5818862657241856 \n",
+      "Precision micro: 0.827331486611265, Recall micro: 0.7853678490036814, F1 micro: 0.805803705258109 \n"
+=======
+      "Model Saved\n",
+      "\n",
+      "Epoch: [10/10], Step: [2001/2499], Train_loss: 0.03630785045819357\n",
+      "Precision macro: 0.7385858289295506, Recall macro: 0.5513073627260797, F1 macro: 0.6059596451961754 \n",
+      "Precision micro: 0.8384496124031008, Recall micro: 0.7900426576287033, F1 micro: 0.8135266863228834 \n",
+      "Model Saved\n",
+      "\n"
+>>>>>>> origin/master
+     ]
+    }
+   ],
+   "source": [
+    "results_df = pd.DataFrame(columns=[\n",
+    "    \"optimizer\", \"num_hidden\", \"dim_hidden\", \"dropout_rate\", \"learning_rate\", \"num_epochs\", \n",
+    "    'precision_macro', 'recall_macro', 'f1_macro', \n",
+    "    'precision_micro', 'recall_micro', 'f1_micro'\n",
+    "])\n",
+    "\n",
+    "\n",
+    "for num_hidden, dim_hidden, dropout_rate, lr in itertools.product(range_num_hidden, range_dim_hidden, range_dropout, range_lr):\n",
+    "    # model\n",
+    "    options = {\n",
+    "        \"VOCAB_SIZE\": len(index_to_word),\n",
+    "        \"dim_e\": weights_matrix_ve.shape[1],\n",
+    "        \"pretrained_embeddings\": weights_matrix_ve,\n",
+    "        \"num_layers\": num_hidden,\n",
+    "        \"num_classes\": len(classes),\n",
+    "        \"mid_features\": dim_hidden,\n",
+    "        \"dropout_rate\": dropout_rate,\n",
+    "        \"activation\": nn.ReLU()\n",
+    "    }\n",
+    "    num_epochs = 10\n",
+    "    \n",
+    "    result = {\n",
+    "        \"optimizer\": \"SWA\", \n",
+    "        \"num_hidden\": num_hidden,\n",
+    "        \"dim_hidden\": dim_hidden,\n",
+    "        \"dropout_rate\": dropout_rate,\n",
+    "        \"learning_rate\": lr,\n",
+    "        \"num_epochs\": num_epochs\n",
+    "    }\n",
+    "    print(\"\\n\", result)\n",
+    "    \n",
+    "    model = FinalModel(options)\n",
+    "    \n",
+    "    if torch.cuda.is_available():\n",
+    "        model = model.to(device)\n",
+    "    \n",
+    "    # Criterion and Optimizer\n",
+    "    criterion = torch.nn.BCEWithLogitsLoss()\n",
+    "    # optimizer = torch.optim.Adam(model.parameters(), lr=0.001)\n",
+    "    base_opt = torch.optim.Adam(model.parameters(), lr=lr)\n",
+    "    optimizer = SWA(base_opt) \n",
+    "    \n",
+    "    # train the model\n",
+    "    model_name = \"_\".join([str(key) + \"_\" + str(value) for key, value in result.items()])\n",
+<<<<<<< HEAD
+    "#     print(model_name)\n",
+    "    metrics_dict = train_model(\n",
+    "        wiki_loaders, model, criterion, optimizer, num_epochs=num_epochs, \n",
+    "        model_name=model_name, save_model=True\n",
+    "    )\n",
+    "    result.update(metrics_dict)\n",
+    "    \n",
+    "    results_df = results_df.append(result, ignore_index=True)\n",
+    "#     results_df.to_csv(\"results/results_tuning_2_3_layers_maxlen_500.csv\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 46,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>optimizer</th>\n",
+       "      <th>num_hidden</th>\n",
+       "      <th>dim_hidden</th>\n",
+       "      <th>dropout_rate</th>\n",
+       "      <th>learning_rate</th>\n",
+       "      <th>num_epochs</th>\n",
+       "      <th>precision_macro</th>\n",
+       "      <th>recall_macro</th>\n",
+       "      <th>f1_macro</th>\n",
+       "      <th>precision_micro</th>\n",
+       "      <th>recall_micro</th>\n",
+       "      <th>f1_micro</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <td>0</td>\n",
+       "      <td>SWA</td>\n",
+       "      <td>2</td>\n",
+       "      <td>120</td>\n",
+       "      <td>0.2</td>\n",
+       "      <td>0.01</td>\n",
+       "      <td>10</td>\n",
+       "      <td>0.706500</td>\n",
+       "      <td>0.501205</td>\n",
+       "      <td>0.557062</td>\n",
+       "      <td>0.820679</td>\n",
+       "      <td>0.783849</td>\n",
+       "      <td>0.801841</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>1</td>\n",
+       "      <td>SWA</td>\n",
+       "      <td>2</td>\n",
+       "      <td>150</td>\n",
+       "      <td>0.2</td>\n",
+       "      <td>0.01</td>\n",
+       "      <td>10</td>\n",
+       "      <td>0.717010</td>\n",
+       "      <td>0.567177</td>\n",
+       "      <td>0.619487</td>\n",
+       "      <td>0.841372</td>\n",
+       "      <td>0.782914</td>\n",
+       "      <td>0.811091</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>2</td>\n",
+       "      <td>SWA</td>\n",
+       "      <td>2</td>\n",
+       "      <td>200</td>\n",
+       "      <td>0.2</td>\n",
+       "      <td>0.01</td>\n",
+       "      <td>10</td>\n",
+       "      <td>0.723463</td>\n",
+       "      <td>0.584460</td>\n",
+       "      <td>0.626028</td>\n",
+       "      <td>0.841100</td>\n",
+       "      <td>0.779466</td>\n",
+       "      <td>0.809111</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "  optimizer num_hidden dim_hidden  dropout_rate  learning_rate num_epochs  \\\n",
+       "0       SWA          2        120           0.2           0.01         10   \n",
+       "1       SWA          2        150           0.2           0.01         10   \n",
+       "2       SWA          2        200           0.2           0.01         10   \n",
+       "\n",
+       "   precision_macro  recall_macro  f1_macro  precision_micro  recall_micro  \\\n",
+       "0         0.706500      0.501205  0.557062         0.820679      0.783849   \n",
+       "1         0.717010      0.567177  0.619487         0.841372      0.782914   \n",
+       "2         0.723463      0.584460  0.626028         0.841100      0.779466   \n",
+       "\n",
+       "   f1_micro  \n",
+       "0  0.801841  \n",
+       "1  0.811091  \n",
+       "2  0.809111  "
+      ]
+     },
+     "execution_count": 46,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "results_df"
+=======
+    "    metrics_dict = train_model(wiki_loaders, model, criterion, optimizer, num_epochs=num_epochs, model_name=model_name)\n",
+    "    result.update(metrics_dict)\n",
+    "    \n",
+    "    results_df = results_df.append(result, ignore_index=True)\n",
+    "    results_df.to_csv(\"results/results_tuning_2_layers_1101.csv\")"
+>>>>>>> origin/master
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# results_df.to_csv(\"results_tuning.csv\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.7.4"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
