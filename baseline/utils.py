@@ -32,6 +32,21 @@ def create_embeddings_matrix(word_to_index, embeddings):
     print("No. of words from vocab found in embeddings: {}".format(words_found))
     return weights_matrix_ve
 
+def get_true_and_pred_labels(loader, model, device, threshold=0.5):
+    """Returns true labels and predictions."""
+    model.eval()
+    outputs_list = []
+    true_list = []
+    with torch.no_grad():
+        for data, length, labels in loader:
+            data_batch, length_batch, label_batch = data.to(device), length.to(device), labels.float()
+            outputs_bc = torch.sigmoid(model(data_batch, length_batch))
+            outputs_bc = outputs_bc.detach().cpu().numpy()
+            outputs_bc = (outputs_bc > threshold)
+            outputs_list.append(outputs_bc)
+            true_list.append(label_batch)
+    return np.vstack(true_list), np.vstack(outputs_list) 
+
 # Function for testing the model
 def test_model(loader, model, device, threshold=0.5):
     """
