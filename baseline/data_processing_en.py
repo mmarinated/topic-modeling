@@ -17,15 +17,16 @@ from nltk.corpus import stopwords
 from sklearn.preprocessing import MultiLabelBinarizer
 from tqdm import tqdm, tqdm_notebook
 
-from spacy.lang.ru import Russian
+from spacy.lang.en import English
+import spacy
 
 # Load Russian tokenizer, tagger, parser, NER and word vectors
-tokenizer = Russian()
+tokenizer = English()
 punctuations = string.punctuation
 
 # downloading and setting stop word list from NLTK
 nltk.download('stopwords')
-STOP_WORDS = set(stopwords.words('russian'))
+STOP_WORDS = set(stopwords.words('english'))
 
 # lowercase and remove punctuation
 def tokenize(sent):
@@ -37,8 +38,6 @@ def clean(text):
     text = text.lower()
     patterns = [
         "\[\[category:.*?\]\]", # # EDITED remove categories [[Category:Far-left politics]]
-        "\[\[Категория:.*?\]\]", # EDITED: category for Russian
-        "\[\[категория:.*?\]\]", # EDITED: category for Russian
         "{{.*}}"
         ,"&amp;"
         ,"&lt;"
@@ -58,10 +57,10 @@ def clean(text):
         ,"\]"
         ,"\{[^\}]*\}"
         ,r"\n"
-        ,r"[^а-яА-Я0-9 ]" # EDITED
-        ,r"\b[а-яА-Я]\b" # EDITED
-#         ,r"[^a-zA-Z0-9 ]"
-#         ,r"\b[a-zA-Z]\b"
+#         ,r"[^а-яА-Я0-9 ]" # EDITED
+#         ,r"\b[а-яА-Я]\b" # EDITED
+        ,r"[^a-zA-Z0-9 ]"
+        ,r"\b[a-zA-Z]\b"
         ," +"
     ]
     
@@ -73,16 +72,16 @@ def clean(text):
 # covert numerals to their text equivalent
 # EDITED
 def subsitute(text):
-    return text.strip().replace('0', ' ноль') \
-                        .replace('1',' один') \
-                        .replace('2',' два') \
-                        .replace('3',' три') \
-                        .replace('4',' четыре') \
-                        .replace('5',' пять') \
-                        .replace('6',' шесть') \
-                        .replace('7',' семь') \
-                        .replace('8',' восемь') \
-                        .replace('9',' девять')
+    return text.strip().replace('0', ' zero') \
+                        .replace('1',' one') \
+                        .replace('2',' two') \
+                        .replace('3',' three') \
+                        .replace('4',' four') \
+                        .replace('5',' five') \
+                        .replace('6',' six') \
+                        .replace('7',' seven') \
+                        .replace('8',' eight') \
+                        .replace('9',' nine')
 
 # remove empty token generated from inserting blank spaces
 def remove_empty_token(tokens):
