@@ -34,7 +34,7 @@
 #### Source file
 - (initial) articles in English: `data/wikitext_tokenized.p` (Peeyush preprocessed the json.)
 - articles in Russian: `data/wikitext_ru_sample.json`
-- Aligned en-ru-hi articles: 33711 articles for each language: 
+- Aligned en-ru-hi articles: 33K articles for each language: (Actually: en 33823, ru 33711)
     `data/aligned_datasets/wikitext_topics_en_filtered.json`, `data/aligned_datasets/wikitext_topics_ru_filtered.json`, `data/aligned_datasets/wikitext_topics_hi_filtered.json`
 
 ## Models
