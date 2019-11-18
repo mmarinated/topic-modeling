@@ -12,7 +12,6 @@ import pandas as pd
 import pickle as pkl
 import numpy as np
 import mwparserfromhell
-from torch.utils.data import Dataset
 from nltk.corpus import stopwords
 from sklearn.preprocessing import MultiLabelBinarizer
 from tqdm import tqdm_notebook as tqdm
@@ -61,6 +60,8 @@ _digits_to_words_dict = {
 }
 
 _common_forbidden_patterns =  [
+    "\[\[category:.*?\]\]", # EDITED remove categories [[Category:Far-left politics]]
+    "\[\[категория:.*?\]\]", # EDITED: remove category for Russian
     "{{.*}}"
     ,"&amp;"
     ,"&lt;"
@@ -83,18 +84,14 @@ _common_forbidden_patterns =  [
     ," +"
 ]
 
+# NOTE: category pattern should be added in common pattern 
+# because it should be removed before other patterns.
 _forbidden_patterns_dict = {
-    "english" : 
-    _common_forbidden_patterns \
-    + [
-        "\[\[category:.*?\]\]", # EDITED remove categories [[Category:Far-left politics]]
+    "english" : [
         r"[^a-zA-Z0-9 ]",
         r"\b[a-zA-Z]\b",
     ],       
-    "russian" :
-    _common_forbidden_patterns \
-    + [
-        "\[\[категория:.*?\]\]", # EDITED: remove category for Russian]
+    "russian" : [
         r"[^а-яА-Я0-9 ]",
         r"\b[а-яА-Я]\b",
     ],
@@ -118,7 +115,7 @@ class Parser:
 
         ## SPECIFIC to language
         # Patterns for regex
-        self.PATTERNS = _forbidden_patterns_dict[language]
+        self.PATTERNS = _common_forbidden_patterns + _forbidden_patterns_dict[language]
         # Digits to words
         self.DIGITS_TO_WORDS_DICT = _digits_to_words_dict[language]
         # Load tokenizer
@@ -126,17 +123,7 @@ class Parser:
         # Download and set stop word list from NLTK
         nltk.download('stopwords')
         self.STOP_WORDS = set(stopwords.words(language))
-        self.STOP_WORDS.update({"", " "})
         
-    def _tokenize(self, sent):
-        """
-        Lowercase and remove punctuation.
-
-        Uses self.PUNCTUATIONS, self.TOKENIZER
-        """
-        tokens = self.TOKENIZER(sent)
-        return [token.text for token in tokens if (token.text not in self.PUNCTUATIONS)]
-
     def _clean_patterns(self, text):
         """ 
         Clean text using regex - similar to what is used in FastText paper.
@@ -157,6 +144,19 @@ class Parser:
         chars = text.strip()
         new_sentence = [self.DIGITS_TO_WORDS_DICT.get(char, char) for char in chars]
         return ''.join(new_sentence)
+    
+    def _tokenize(self, sent):
+        """
+        Lowercase and remove punctuation.
+
+        Uses self.PUNCTUATIONS, self.TOKENIZER
+        """
+        tokens = self.TOKENIZER(sent)
+        return [token.text for token in tokens if (token.text not in self.PUNCTUATIONS)]
+    
+    def _remove_empty_tokens(self, tokens):
+        """ Removes empty tokens that consist of several spaces. """
+        return [token for token in tokens if not token.strip() == '']
 
     def _remove_stop_words(self, tokens):
         """
@@ -167,13 +167,14 @@ class Parser:
         return [token for token in tokens if not token in self.STOP_WORDS]
 
     def _preprocess_pipeline(self, wikitext) -> str:
-        """ Combines all text transformations in a pipeline. """
+        """ Combines all text transformations in a pipeline and returns list of tokens. """
         wikitext = str(wikitext).lower()
         wikitext = self._clean_patterns(wikitext)
         wikitext = self._substitute_digits_with_words(wikitext)
         wikitext = self._tokenize(wikitext)
-        tokens   = self._remove_stop_words(wikitext)
-        return tokens
+        wikitext = self._remove_empty_tokens(wikitext)
+        wikitext = self._remove_stop_words(wikitext)
+        return wikitext
 
     def get_wiki_tokenized_dataset(self, fname, *,
              extract_section=False, extract_outlinks=False,
