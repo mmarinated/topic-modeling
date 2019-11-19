@@ -39,6 +39,7 @@
 
 ## Models
 ADD model files to Google Drive. Currently they are on prince.
+[Link to Google Drive.](https://drive.google.com/drive/u/2/folders/1_fhco5kWR8uAZ7pnlzAFLkzeYEwV_QYX)
 
 ### EN
 - best 1-layer: `models/en_optimizer_SWA_num_hidden_1_dim_hidden_150_dropout_rate_0_learning_rate_0.01_num_epochs_10.pth`
@@ -49,8 +50,19 @@ ADD model files to Google Drive. Currently they are on prince.
 - finetuned: `models/ru_optimizer_SWA_num_hidden_2_dim_hidden_150_dropout_rate_0.2_learning_rate_0.01_num_epochs_10_init_pretrained.pth`,   
 - trained from scratch: `models/ru_optimizer_SWA_num_hidden_2_dim_hidden_150_dropout_rate_0.2_learning_rate_0.01_num_epochs_10.pth`,
 
+## Results
+- Multilingual
+
+|idx|experiment                   |precision_macro|recall_macro                                 |f1_macro|precision_micro|recall_micro|f1_micro|
+|------|-----------------------------|---------------|---------------------------------------------|--------|---------------|------------|--------|
+|0     |Train on 20K EN articles, validate on 2K.|0.5811         |0.4114                                       |0.4622  |0.8467         |0.705       |0.7694  |
+|1     |Train on 10K EN articles and 10K RU articles, validate on 1K RU and 1000 EN.|0.6146         |0.4238                                       |0.4815  |0.8418         |0.7318      |0.783   |
+|2     |Train on 10K EN articles and 10K RU articles, validate on 1K EN.|0.5893         |0.4714                                       |0.5078  |0.8343         |0.7579      |0.7942  |
+|3     |Train on 10K EN articles and 10K RU articles, validate on 1K RU.|0.5631         |0.3612                                       |0.4168  |0.8493         |0.7082      |0.7724  |
+
 
 ## TODO
-- load model from state dict: load options dict, so not to difine it all the time.
-- standardize code for data preprocessing for different languages.
+- load model from state dict: load options dict, so not to define it all the time.
+- standardize code for data preprocessing for different languages. (might want to specify len of train, val. Divide to train,val, save test.)
+- clean code for models.
 - ADD model files to Google Drive. Currently they are on prince.
