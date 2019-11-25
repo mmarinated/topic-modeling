@@ -34,7 +34,7 @@
 #### Source file
 - (initial) articles in English: `data/wikitext_tokenized.p` (Peeyush preprocessed the json.)
 - articles in Russian: `data/wikitext_ru_sample.json`
-- Aligned en-ru-hi articles: 33K articles for each language: (Actually: en 33823, ru 33711)
+- Aligned en-ru-hi articles: 33K articles for each language: (Actually: en 33823, ru 33711, hi 33637)
     `data/aligned_datasets/wikitext_topics_en_filtered.json`, `data/aligned_datasets/wikitext_topics_ru_filtered.json`, `data/aligned_datasets/wikitext_topics_hi_filtered.json`
 
 ## Models
@@ -62,6 +62,7 @@ ADD model files to Google Drive. Currently they are on prince.
 
 
 ## TODO
+- Add Hindi configs to `process_json_to_df.py`
 - load model from state dict: load options dict, so not to define it all the time.
 - standardize code for data preprocessing for different languages. (might want to specify len of train, val. Divide to train,val, save test.)
 - clean code for models.
