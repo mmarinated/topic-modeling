@@ -7,24 +7,15 @@ Parser class -- for parsing json file with Wikipedia articles to get
 Main function is 
     - get_wiki_tokenized_dataset.
 """
-# import dependencies
-import io
-import re
-import nltk
 import json
-import gzip
-import torch
-import spacy
+import re
 import string
-import jsonlines
-import pandas as pd
-import pickle as pkl
-import numpy as np
-import mwparserfromhell
-from nltk.corpus import stopwords
-from sklearn.preprocessing import MultiLabelBinarizer
-from tqdm import tqdm_notebook as tqdm
 
+import mwparserfromhell
+import nltk
+import pandas as pd
+from nltk.corpus import stopwords
+from tqdm import tqdm_notebook as tqdm
 import spacy
 
 ###
@@ -133,23 +124,23 @@ _common_forbidden_patterns =  [
     ," +"
 ]
 
-# NOTE: category pattern should be added in common pattern 
+# NOTE: category pattern should be added in common pattern
 # because it should be removed before other patterns.
 _forbidden_patterns_dict = {
-    "english" : [
+    "english": [
         r"[^a-zA-Z0-9 ]",
         r"\b[a-zA-Z]\b",
-    ],       
-    "russian" : [
+    ],
+    "russian": [
         r"[^а-яА-Я0-9 ]",
         r"\b[а-яА-Я]\b",
     ],
-    "hindi" : [
+    "hindi": [
         r'[^\u0900-\u097F0-9 ]',  # remove all special symbols
-        r'।', # remove full stop
+        r'।',  # remove full stop
     ]
 }
- 
+
 ###
 # Parser.
 ###
@@ -191,10 +182,15 @@ class Parser:
         return text
 
     def _substitute_digits_with_words(self, text):
-        """ 
-        Convert digits to their names. 
-        
+        """
+        Convert digits to their names.
+
         Uses self.DIGITS_TO_WORDS_DICT
+
+        Example:
+        >>> parser = Parser("english")
+        >>> parser._substitute_digits_with_words("1 boy, 23 girls")
+        " one boy,  two three girls"
         """
         chars = text.strip()
         new_sentence = [self.DIGITS_TO_WORDS_DICT.get(char, char) for char in chars]
@@ -234,9 +230,9 @@ class Parser:
     ###
     # Parse wiki outlinks.
     ###
-    
+
     def _links_to_str(self, raw_links):
-        return [str(raw_link) for raw_link in raw_links]    
+        return [str(raw_link) for raw_link in raw_links]
 
     def _clean_links(self, raw_links):
         links = []
@@ -244,10 +240,11 @@ class Parser:
             link = raw_link[2:-2].split("|")[0]
             links.append(link)
         return links
-    
-    def get_wiki_tokenized_dataset(self, fname, *,
-             extract_section=False, extract_outlinks=False,
-             debug=False):
+
+    def get_wiki_tokenized_dataset(
+            self, fname, *,
+            extract_section=False, extract_outlinks=False,
+            debug=False):
         """
         Get the tokenized dataframe containing - QID, Word Tokens & Categories.
         
@@ -283,3 +280,4 @@ class Parser:
 
         wiki_df = pd.DataFrame(wiki_list_of_dicts)
         return wiki_df
+

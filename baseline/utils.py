@@ -124,17 +124,17 @@ def create_per_class_tables(loader, model, device, class_names, threshold=0.5):
         outputs_list_nc,
         average=None
     )
-    
+
     # combine all metrics in a dict
     per_class_metrics = {
         "class_name": class_names,
         "count": counts_c,
-        "TN": confusion_matrix_c4[:,0], 
-        "FN": confusion_matrix_c4[:,2],
-        "TP": confusion_matrix_c4[:,3],
-        "FP": confusion_matrix_c4[:,1],
-        "precision": precision_c, 
-        "recall": recall_c, 
+        "TN": confusion_matrix_c4[:, 0],
+        "FN": confusion_matrix_c4[:, 2],
+        "TP": confusion_matrix_c4[:, 3],
+        "FP": confusion_matrix_c4[:, 1],
+        "precision": precision_c,
+        "recall": recall_c,
         "f1": f1_c
     }
     return pd.DataFrame(per_class_metrics)
