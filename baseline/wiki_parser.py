@@ -243,6 +243,7 @@ class Parser:
 
     def get_wiki_tokenized_dataset(
             self, fname, *,
+            extract_title=True, extract_tokens=True, extract_categories=True,
             extract_section=False, extract_outlinks=False,
             debug=False):
         """
@@ -262,9 +263,13 @@ class Parser:
                 line = json.loads(line.strip())
                 wikitext = mwparserfromhell.parse(line['wikitext'])
                 wiki_row['QID'] = line['qid'] # EDITED
-                wiki_row['mid_level_categories'] = line['mid_level_categories']
-                wiki_row['tokens'] = self._preprocess_pipeline(wikitext)
-
+                
+                if extract_title:
+                    wiki_row["title"] = line["entitle"]
+                if extract_tokens:
+                    wiki_row['tokens'] = self._preprocess_pipeline(wikitext)
+                if extract_categories:
+                    wiki_row['mid_level_categories'] = line['mid_level_categories']
                 if extract_section:
                     sections = wikitext.filter_headings()  
                     wiki_row['sections_tokens'] = self._preprocess_pipeline(sections)
