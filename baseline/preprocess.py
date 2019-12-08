@@ -101,7 +101,7 @@ def tokenize_dataset(dataset, word_to_index, max_num_tokens=None):
 TextData = namedtuple("TextData", ("tokens", "len", "target"))
 
 class TensoredDataset(Dataset):
-    def __init__(self, list_of_lists_of_tokens,targets):
+    def __init__(self, list_of_lists_of_tokens, targets):
         self.input_tensors = []
         self.target_tensors = []
         self.input_len = []
@@ -129,7 +129,7 @@ def _pad_list_of_tensors(list_of_tensors, *, pad_token):
         #print(t.reshape(1, -1).shape)
         #print(torch.tensor([[pad_token]*(max_length - t.size(-1))])[0].shape)
         padded_tensor = torch.cat([t.reshape(1, -1),
-                                   torch.LongTensor([[pad_token]*(max_length - t.size(-1))])], dim = -1)
+                                   torch.LongTensor([[pad_token]*(max_length - t.size(-1))])], dim=-1)
         padded_list.append(padded_tensor)
     padded_tensor = torch.cat(padded_list, dim=0)
     return padded_tensor

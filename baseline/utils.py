@@ -146,15 +146,15 @@ def train_model(train_loader, val_loader, model, criterion, optimizer, options, 
                     epoch+1, num_epochs, i+1, len(train_loader), runnin_loss / i))
             # validate every 300 iterations
             if i > 0 and i % 800 == 0:
-#                 optimizer.update_swa()
+                # optimizer.update_swa()
                 metrics_dict = test_model(val_loader, model, device=device)
                 print_results(metrics_dict)
                 if metrics_dict["f1_micro"] > best_val_f1_micro:
                     best_val_f1_micro = metrics_dict["f1_micro"]
                     best_metrics_dict = metrics_dict
                     if save_model:
-#                         optimizer.swap_swa_sgd()
-#                         torch.save(model.state_dict(), f"{PATH_TO_MODELS_FOLDER}{model_name}.pth")
+                        # optimizer.swap_swa_sgd()
+                        # torch.save(model.state_dict(), f"{PATH_TO_MODELS_FOLDER}{model_name}.pth")
                         torch.save({
                             'state_dict': model.state_dict(),
                             'options': options,
@@ -164,7 +164,7 @@ def train_model(train_loader, val_loader, model, criterion, optimizer, options, 
      
                         print('Model Saved')
                         print()
-#     optimizer.swap_swa_sgd()
+    # optimizer.swap_swa_sgd()
     return best_metrics_dict
 
 def create_per_class_tables(loader, model, device, class_names, threshold=0.5):
