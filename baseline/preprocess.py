@@ -121,7 +121,7 @@ class TensoredDataset(Dataset):
     def __repr__(self):
         return "return TextData(self.input_tensors[idx], self.input_len[idx], self.target_tensors[idx])"
     
-def pad_list_of_tensors(list_of_tensors, *, pad_token):
+def _pad_list_of_tensors(list_of_tensors, *, pad_token):
     max_length = max([t.size(-1) for t in list_of_tensors])
     padded_list = []
     
@@ -134,12 +134,13 @@ def pad_list_of_tensors(list_of_tensors, *, pad_token):
     padded_tensor = torch.cat(padded_list, dim=0)
     return padded_tensor
 
-def pad_collate_fn(batch, word_to_index):
+def pad_collate_fn(batch, *, pad_token):
+    """pad_token = word_to_index['<pad>']"""
     input_list, length_list, target_list = zip(*batch)
     text_data = TextData(
-        tokens=pad_list_of_tensors(input_list, pad_token=word_to_index['<pad>']),
-        len   =torch.stack(length_list),
-        target=torch.stack(target_list),
+        tokens = _pad_list_of_tensors(input_list, pad_token=pad_token),
+        len    = torch.stack(length_list),
+        target = torch.stack(target_list),
     )
     return text_data
 

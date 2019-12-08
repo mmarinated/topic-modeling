@@ -14,16 +14,17 @@ from preprocess import (create_dict_of_tensor_datasets,
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 PATH_TO_DATA_FOLDER = "/scratch/mz2476/wiki/data/aligned_datasets/"
+PATH_TO_SAVE_FOLDER = "/scratch/mz2476/wiki/data/aligned_datasets/data_for_model" # ADD it to paths
 
 # Load list of classes
 classes_list = torch.load(PATH_TO_DATA_FOLDER + '45_classes_list.pt')
 
-SAVE = False
+SAVE = True
 DEBUG = True
-LOAD = True
+LOAD = False
 
-test_size = 0.1
-train_size = 10000
+monolingual_train_size = 30000
+multilingual_train_size = 10000
 val_size = 1000
 
 SEED = 57
@@ -36,14 +37,15 @@ for language in LANGUAGES_LIST:
     FILE_NAMES_DICT = {
         "json": f"wikitext_topics_{language_code}_filtered.json",
         "wiki_df": f"wikitext_tokenized_text_sections_outlinks_{language_code}.p",
-        "vocab": f"vocab_all_{language_code}.pt",
-        "train": f"df_wiki_train_{train_size}_{language_code}.pt",
-        "val": f"df_wiki_valid_{val_size}_{language_code}.pt",
-        "test": f"df_wiki_test_{test_size}_{language_code}.pt",
+        "vocab": f"data_for_model/vocab_all_{language_code}.pt",
+        "monolingual_train": f"data_for_model/df_wiki_monolingual_train_{monolingual_train_size}_{language_code}.pt",
+        "multilingual_train": f"data_for_model/df_wiki_multilingual_train_{multilingual_train_size}_{language_code}.pt",
+        "val": f"data_for_model/df_wiki_valid_{val_size}_{language_code}.pt",
+        "test": f"data_for_model/df_wiki_test_{language_code}.pt",
 #         "tensor_dataset": f"wiki_tensor_dataset_{language_code}.pt",
     }
     LANGUAGES_DICT[language]["FILE_NAMES_DICT"] = FILE_NAMES_DICT
-    print(FILE_NAMES_DICT)
+    print(language, "\n", FILE_NAMES_DICT)
 
 # Load wiki_df and remove rows with empty labels/tokens
 for language in LANGUAGES_DICT.keys():
@@ -73,30 +75,33 @@ for cur_dict in LANGUAGES_DICT.values():
     index_to_word, word_to_index = create_lookups_for_vocab(vocab)
     cur_dict["index_to_word"], cur_dict["word_to_index"] = index_to_word, word_to_index
 
+
 # train/val/test split by QID
 QIDs = LANGUAGES_DICT["english"]["wiki_df"].QID
-rest_QIDs, test_QIDs = train_test_split(QIDs, test_size=test_size, random_state=SEED)
-train_QIDs, val_QIDs = train_test_split(QIDs, train_size=train_size, test_size=val_size, random_state=SEED)
+monolingual_train_QIDs, val_and_test_QIDs = train_test_split(QIDs, train_size=monolingual_train_size, random_state=SEED)
+multilingual_train_QIDs, _ = train_test_split(monolingual_train_QIDs, train_size=multilingual_train_size, random_state=SEED)
+val_QIDs, test_QIDs = train_test_split(QIDs, train_size=val_size, random_state=SEED)
+test_size = len(test_QIDs)
 
 for cur_dict in LANGUAGES_DICT.values():
     dict_of_dfs = defaultdict()
 
     if LOAD:
-        dict_of_dfs["train"], dict_of_dfs["val"], dict_of_dfs["test"] =\
-            (torch.load(PATH_TO_DATA_FOLDER + cur_dict["FILE_NAMES_DICT"]["train"]),
+        dict_of_dfs["monolingual_train"], dict_of_dfs["multilingual_train"], dict_of_dfs["val"], dict_of_dfs["test"] =\
+            (torch.load(PATH_TO_DATA_FOLDER + cur_dict["FILE_NAMES_DICT"]["monolingual_train"]),
+             torch.load(PATH_TO_DATA_FOLDER + cur_dict["FILE_NAMES_DICT"]["multilingual_train"]),
              torch.load(PATH_TO_DATA_FOLDER + cur_dict["FILE_NAMES_DICT"]["val"]),
              torch.load(PATH_TO_DATA_FOLDER + cur_dict["FILE_NAMES_DICT"]["test"]))
 
     if SAVE:
-        dict_of_dfs["train"], dict_of_dfs["val"], dict_of_dfs["test"] =\
-            (cur_dict["wiki_df"][cur_dict["wiki_df"].QID.isin(train_QIDs)],
+        dict_of_dfs["monolingual_train"], dict_of_dfs["multilingual_train"], dict_of_dfs["val"], dict_of_dfs["test"] =\
+            (cur_dict["wiki_df"][cur_dict["wiki_df"].QID.isin(monolingual_train_QIDs)],
+             cur_dict["wiki_df"][cur_dict["wiki_df"].QID.isin(multilingual_train_QIDs)],
              cur_dict["wiki_df"][cur_dict["wiki_df"].QID.isin(val_QIDs)],
              cur_dict["wiki_df"][cur_dict["wiki_df"].QID.isin(test_QIDs)])
-
-        torch.save(dict_of_dfs["train"], PATH_TO_DATA_FOLDER + cur_dict["FILE_NAMES_DICT"]["train"])
-        torch.save(dict_of_dfs["val"], PATH_TO_DATA_FOLDER + cur_dict["FILE_NAMES_DICT"]["val"])
-        torch.save(dict_of_dfs["test"], PATH_TO_DATA_FOLDER + cur_dict["FILE_NAMES_DICT"]["test"])
-        print("Saved:, ", cur_dict["FILE_NAMES_DICT"]["train"], cur_dict["FILE_NAMES_DICT"]["val"], cur_dict["FILE_NAMES_DICT"]["test"])
+        for name in dict_of_dfs.keys():
+            torch.save(dict_of_dfs[name], PATH_TO_DATA_FOLDER + cur_dict["FILE_NAMES_DICT"][name])
+            print("Saved:, ", cur_dict["FILE_NAMES_DICT"][name])
     
     cur_dict["dict_of_dfs"] = dict_of_dfs
 
