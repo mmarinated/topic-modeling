@@ -16,13 +16,13 @@ def load_vectors(fname):
         data[tokens[0]] = torch.tensor(list(map(float, tokens[1:])))
     return data
 
-def create_embeddings_matrix(word_to_index, embeddings):
-    vocab_size = len(word_to_index)
+def create_embeddings_matrix(index_to_word, embeddings):
+    vocab_size = len(index_to_word)
     embed_dim = len(list(embeddings.values())[0])
     weights_matrix_ve = np.zeros((vocab_size, embed_dim))
 
     words_found = 0
-    for i, word in enumerate(word_to_index):
+    for i, word in enumerate(index_to_word):
         if word in embeddings.keys():
             weights_matrix_ve[i] = embeddings[word]
             words_found += 1
@@ -87,6 +87,16 @@ def test_model(loader, model, device, threshold=0.5):
         "f1_micro": f1_micro
     }
     return dict_metrics
+
+def print_results(metrics_dict):
+    """Prettily prints metrics dict."""
+    metrics_dict = {key: round(value, 4) for key, value in metrics_dict.items()}
+    print("Precision macro: {}, Recall macro: {}, F1 macro: {} ".format(
+        metrics_dict["precision_macro"], metrics_dict["recall_macro"], metrics_dict["f1_macro"]
+    ))
+    print("Precision micro: {}, Recall micro: {}, F1 micro: {} ".format(
+        metrics_dict["precision_micro"], metrics_dict["recall_micro"], metrics_dict["f1_micro"]
+    ))
 
 def create_per_class_tables(loader, model, device, class_names, threshold=0.5):
     """
