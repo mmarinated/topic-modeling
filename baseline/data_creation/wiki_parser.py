@@ -16,7 +16,9 @@ import nltk
 import pandas as pd
 from nltk.corpus import stopwords
 from tqdm import tqdm_notebook as tqdm
-import spacy
+
+
+__all__ = ["Parser"]
 
 ###
 # All language-specific constants defined here.
