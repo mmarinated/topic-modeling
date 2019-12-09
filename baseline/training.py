@@ -3,14 +3,18 @@ import torch
 from sklearn.metrics import precision_recall_fscore_support
 from torch.utils.data import DataLoader
 
+from torch.utils.tensorboard import SummaryWriter
+
 from model import FinalModel
 from MY_PATHS import *
+
+from typing import Dict, Any
 
 from torch.utils import data
 import pandas as pd
 
 
-def get_train_val_loader(train_dataset, val_dataset, *,
+def get_train_val_loader(train_dataset, list_val_dataset, *,
                          batch_size=8,
                          collate_fn=None):
     loader_kw = {
@@ -23,13 +27,14 @@ def get_train_val_loader(train_dataset, val_dataset, *,
         **loader_kw,
     )
     
-    val_loader = DataLoader(
-        val_dataset, 
-        shuffle=False, 
-        **loader_kw,
-    )
+    assert isinstance(list_val_dataset, list)
+
+    list_val_loaders = [
+        DataLoader(val_dataset, shuffle=False, **loader_kw)
+        for val_dataset in list_val_dataset
+    ]
     
-    return train_loader, val_loader
+    return train_loader, list_val_loaders
 
 class ClassifierLearner:
     def __init__(self, options, model_name, *, device, criterion=None, optimizer=None):
@@ -40,6 +45,8 @@ class ClassifierLearner:
         self.criterion = criterion or torch.nn.BCEWithLogitsLoss()
         self.optimizer = optimizer or torch.optim.Adam(self.model.parameters(), lr=3e-3)
 
+        self.logger = SummaryWriter(PATH_TO_TENSORBOARD_RUNS, comment=self.model_name)
+
 
         self.best_epoch = -1
         self.best_val_f1_micro = 0
@@ -47,10 +54,11 @@ class ClassifierLearner:
         self.plot_cache = []
 
 
-    def set_loaders(self, train_loader, val_loader):
+    def set_loaders(self, train_loader, name_to_val_loader: Dict[str, Any]):
         self.train_loader = train_loader
-        self.val_loader = val_loader
-
+        self.name_to_val_loader = name_to_val_loader
+        assert "val" in self.name_to_val_loader.keys(), \
+               "it is main val loader that should be always present"
 
     def _set_optim_lr(self, lr):
         assert len(self.optimizer.param_groups) == 1
@@ -77,18 +85,29 @@ class ClassifierLearner:
 
                 runnin_loss += loss.item()
                 #torch.nn.utils.clip_grad_norm(model.parameters(), 10)
-                if i>0 and i % 100 == 0:
-                    print('Epoch: [{}/{}], Step: [{}/{}], Train_loss: {}'.format(
-                        epoch+1, num_epochs, i+1, len(self.train_loader), runnin_loss / i))
-                # validate every 300 iterations
-                if i > 0 and i % 800 == 0:
-                    # optimizer.update_swa()
-                    self.validate(epoch, save_model=save_model)
+                # if i>0 and i % 100 == 0:
+                #     print('Epoch: [{}/{}], Step: [{}/{}], Train_loss: {}'.format(
+                #         epoch+1, num_epochs, i+1, len(self.train_loader), runnin_loss / i))
 
+                # # validate every 300 iterations
+                # if i > 0 and i % 800 == 0:
+                #     # optimizer.update_swa()
+                #     self.validate(loader=self.val_loader, epoch=epoch, save_model=save_model)
+
+
+            # updating
+            new_f1_score = self.validate(loader=self.name_to_val_loader["val"], epoch=epoch, save_model=save_model)
+            
+            # logging
+            self.logger.add_scalar("train/bce_loss", runnin_loss, epoch)
+            _tmp_f1_micro = self.get_test_metrics(self.train_loader, device=self.device)["f1_micro"]
+            self.logger.add_scalar("f1_micro/train", _tmp_f1_micro, epoch)
+            for val_loader_name, val_loader in self.name_to_val_loader.items():
+                _tmp_f1_micro = self.get_test_metrics(val_loader, device=self.device)["f1_micro"]
+                self.logger.add_scalar(f"f1_micro/{val_loader_name}", _tmp_f1_micro, epoch)
 
         # optimizer.swap_swa_sgd()
         return self.best_metrics_dict, self.best_epoch
-
 
     def get_test_metrics(self, loader, *, device, threshold=0.5):
         """
@@ -130,7 +149,6 @@ class ClassifierLearner:
         }
         return dict_metrics
 
-    
     def get_test_metrics_kfold(self, num_splits, dataset):
         indices_splits = [
             np.arange(start, len(dataset), num_splits) 
@@ -144,10 +162,14 @@ class ClassifierLearner:
         
         return pd.DataFrame(list_of_metrics)
 
-
-
-    def validate(self, epoch, save_model):
-        metrics_dict = self.get_test_metrics(self.val_loader, device=self.device)
+    def validate(self, loader, epoch, save_model) -> float:
+        """
+        Updates best_val_score
+        
+        @returns
+            f1_micro score
+        """
+        metrics_dict = self.get_test_metrics(loader, device=self.device)
         self.print_results(metrics_dict)
         if metrics_dict["f1_micro"] > self.best_val_f1_micro:
             self.best_epoch = epoch
@@ -156,6 +178,7 @@ class ClassifierLearner:
             if save_model:
                 self.save_model()
                 
+        return metrics_dict["f1_micro"]
 
     def save_model(self):
         torch.save({
