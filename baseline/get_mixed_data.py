@@ -1,6 +1,7 @@
 
 from collections import defaultdict
 
+import numpy
 import pandas as pd
 import torch
 from sklearn.preprocessing import MultiLabelBinarizer
@@ -23,11 +24,6 @@ val_size = 1000
 
 def get_datasets(LANGUAGES_LIST=("english", "russian", "hindi"), SAVE=False, LOAD=True):
     """
-
-    Test:
-    >>> index_to_word, word_to_index, dict_wiki_tensor_dataset, weights_matrix_ve, classes = get_datasets()
-
-
     @returns
         index_to_word, word_to_index, dict_wiki_tensor_dataset, weights_matrix_ve, classes
     """

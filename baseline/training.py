@@ -3,8 +3,11 @@ import torch
 from sklearn.metrics import precision_recall_fscore_support
 from torch.utils.data import DataLoader
 
-from .model import FinalModel
-from .MY_PATHS import *
+from model import FinalModel
+from MY_PATHS import *
+
+from torch.utils import data
+import pandas as pd
 
 
 def get_train_val_loader(train_dataset, val_dataset, *,
@@ -32,11 +35,13 @@ class ClassifierLearner:
     def __init__(self, options, model_name, *, device, criterion=None, optimizer=None):
         self.options = options
         self.model_name = model_name
+        self.device = device
         self.model = FinalModel(self.options).to(device)
         self.criterion = criterion or torch.nn.BCEWithLogitsLoss()
         self.optimizer = optimizer or torch.optim.Adam(self.model.parameters(), lr=3e-3)
 
 
+        self.best_epoch = -1
         self.best_val_f1_micro = 0
         self.best_metrics_dict = {}
         self.plot_cache = []
@@ -47,14 +52,14 @@ class ClassifierLearner:
         self.val_loader = val_loader
 
 
-    def set_optim_lr(self, lr):
+    def _set_optim_lr(self, lr):
         assert len(self.optimizer.param_groups) == 1
         self.optimizer.param_groups[0]["lr"] = lr
 
 
     def train_model(self, num_epochs=10, lr=3e-3,  save_model=False):
         assert hasattr(self, "train_loader"), "call set_loaders first"
-        self.set_optim_lr(lr)
+        self._set_optim_lr(lr)
 
         for epoch in range(num_epochs):
             print(epoch, "epoch")
@@ -78,11 +83,11 @@ class ClassifierLearner:
                 # validate every 300 iterations
                 if i > 0 and i % 800 == 0:
                     # optimizer.update_swa()
-                    self.validate(save_model)
+                    self.validate(epoch, save_model=save_model)
 
 
         # optimizer.swap_swa_sgd()
-        return self.best_metrics_dict
+        return self.best_metrics_dict, self.best_epoch
 
 
     def get_test_metrics(self, loader, *, device, threshold=0.5):
@@ -121,15 +126,31 @@ class ClassifierLearner:
             "f1_macro": f1_macro,
             "precision_micro": precision_micro, 
             "recall_micro": recall_micro, 
-            "f1_micro": f1_micro
+            "f1_micro": f1_micro,
         }
         return dict_metrics
 
+    
+    def get_test_metrics_kfold(self, num_splits, dataset):
+        indices_splits = [
+            np.arange(start, len(dataset), num_splits) 
+            for start in range(num_splits)
+        ]
+        
+        list_of_metrics = [
+            self.get_test_metrics(data.Subset(dataset, indices), device=self.device)
+            for indices in indices_splits
+        ]
+        
+        return pd.DataFrame(list_of_metrics)
 
-    def validate(self, save_model):
+
+
+    def validate(self, epoch, save_model):
         metrics_dict = self.get_test_metrics(self.val_loader, device=self.device)
         self.print_results(metrics_dict)
         if metrics_dict["f1_micro"] > self.best_val_f1_micro:
+            self.best_epoch = epoch
             self.best_val_f1_micro = metrics_dict["f1_micro"]
             self.best_metrics_dict = metrics_dict
             if save_model:
