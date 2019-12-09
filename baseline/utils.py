@@ -1,8 +1,6 @@
 import io
-from functools import partial
 
 import torch
-from torch.utils.data import Dataset, DataLoader
 import numpy as np
 from tqdm import tqdm
 
