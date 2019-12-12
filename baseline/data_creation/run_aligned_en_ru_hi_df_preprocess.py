@@ -105,5 +105,5 @@ for cur_dict in LANGUAGES_DICT.values():
         for name in dict_of_dfs.keys():
             torch.save(dict_of_dfs[name], PATH_TO_DATA_FOLDER + cur_dict["FILE_NAMES_DICT"][name])
             print("Saved:, ", cur_dict["FILE_NAMES_DICT"][name])
-    
+
     cur_dict["dict_of_dfs"] = dict_of_dfs

@@ -62,8 +62,7 @@ ADD model files to Google Drive. Currently they are on prince.
 
 
 ## TODO
-- Add Hindi configs to `process_json_to_df.py`
-- load model from state dict: load options dict, so not to define it all the time.
-- standardize code for data preprocessing for different languages. (might want to specify len of train, val. Divide to train,val, save test.)
+- load model from state dict, options.
+- standardize code for data preprocessing for different languages (might want to specify len of train, val. Divide to train,val, save test.): write a class for it.
 - clean code for models.
 - ADD model files to Google Drive. Currently they are on prince.

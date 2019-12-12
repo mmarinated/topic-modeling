@@ -1,12 +1,12 @@
-import numpy as np
-import pandas as pd
-import torch
-from tqdm import tqdm
-
+import io
 from collections import namedtuple
 from typing import List, Set
 
+import numpy as np
+import pandas as pd
+import torch
 from torch.utils.data import Dataset
+from tqdm import tqdm
 
 np.random.seed(57)
 
@@ -62,6 +62,35 @@ def create_lookups_for_vocab(vocab, add_tokens_list=[]):
     index_to_word = add_tokens_list + vocab
     word_to_index = {word: idx for idx, word in enumerate(index_to_word)}
     return index_to_word, word_to_index
+
+###
+# Embeddings
+###
+
+def load_vectors(fname):
+    fin = io.open(fname, 'r', encoding='utf-8', newline='\n', errors='ignore')
+    n, d = map(int, fin.readline().split())
+    data = {}
+    for line in tqdm(fin):
+        tokens = line.rstrip().split(' ')
+        data[tokens[0]] = torch.tensor(list(map(float, tokens[1:])))
+    return data
+
+def create_embeddings_matrix(index_to_word, embeddings):
+    vocab_size = len(index_to_word)
+    embed_dim = len(list(embeddings.values())[0])
+    weights_matrix_ve = np.zeros((vocab_size, embed_dim))
+
+    words_found = 0
+    for i, word in enumerate(index_to_word):
+        if word in embeddings.keys():
+            weights_matrix_ve[i] = embeddings[word]
+            words_found += 1
+    weights_matrix_ve = torch.FloatTensor(weights_matrix_ve)
+    
+    print("Total words in vocab: {}".format(vocab_size))
+    print("No. of words from vocab found in embeddings: {}".format(words_found))
+    return weights_matrix_ve
 
 ###
 # Create tensor dataset
