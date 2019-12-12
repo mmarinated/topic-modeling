@@ -8,6 +8,8 @@ import torch
 from torch.utils.data import Dataset
 from tqdm import tqdm
 
+from ..MY_PATHS import *
+
 np.random.seed(57)
 
 ###

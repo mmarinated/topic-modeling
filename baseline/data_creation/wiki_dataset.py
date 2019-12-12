@@ -6,9 +6,7 @@ import pandas as pd
 import torch
 from sklearn.preprocessing import MultiLabelBinarizer
 
-import preprocess
-import utils
-from MY_PATHS import *
+from ..MY_PATHS import *
 from preprocess import (TensoredDataset, create_dict_of_tensor_datasets,
                         create_lookups_for_vocab, create_vocab_from_tokens,
                         pad_collate_fn, tokenize_dataset)

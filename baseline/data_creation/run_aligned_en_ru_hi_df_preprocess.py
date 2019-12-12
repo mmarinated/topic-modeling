@@ -10,10 +10,9 @@ from ..preprocess import (create_lookups_for_vocab, create_vocab_from_tokens,
                           remove_non_common_articles_and_sort_by_QID,
                           remove_rows_with_empty_column)
 
-device = "cuda:0" if torch.cuda.is_available() else "cpu"
+from ..MY_PATHS import *
 
-PATH_TO_DATA_FOLDER = "/scratch/mz2476/wiki/data/aligned_datasets/"
-PATH_TO_SAVE_FOLDER = "/scratch/mz2476/wiki/data/aligned_datasets/data_for_model" # ADD it to paths
+device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 # Load list of classes
 classes_list = torch.load(PATH_TO_DATA_FOLDER + '45_classes_list.pt')
