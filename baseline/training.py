@@ -1,17 +1,15 @@
+from typing import Any, Dict
+
 import numpy as np
+import pandas as pd
 import torch
 from sklearn.metrics import precision_recall_fscore_support
+from torch.utils import data
 from torch.utils.data import DataLoader
-
 from torch.utils.tensorboard import SummaryWriter
 
 from model import FinalModel
 from MY_PATHS import *
-
-from typing import Dict, Any
-
-from torch.utils import data
-import pandas as pd
 
 
 def get_train_val_loader(train_dataset, list_val_dataset, *,
@@ -46,7 +44,7 @@ class ClassifierLearner:
         self.optimizer = optimizer or torch.optim.Adam(self.model.parameters(), lr=3e-3)
 
         self.logger = SummaryWriter(PATH_TO_TENSORBOARD_RUNS, comment=self.model_name)
-
+        # self.logger.add_text("model_description", self._model.__repr__())
 
         self.best_epoch = -1
         self.best_val_f1_micro = 0
