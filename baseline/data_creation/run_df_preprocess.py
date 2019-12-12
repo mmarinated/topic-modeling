@@ -79,8 +79,12 @@ for cur_dict in LANGUAGES_DICT.values():
 QIDs = LANGUAGES_DICT["english"]["wiki_df"].QID
 monolingual_train_QIDs, val_and_test_QIDs = train_test_split(QIDs, train_size=monolingual_train_size, random_state=SEED)
 multilingual_train_QIDs, _ = train_test_split(monolingual_train_QIDs, train_size=multilingual_train_size, random_state=SEED)
-val_QIDs, test_QIDs = train_test_split(QIDs, train_size=val_size, random_state=SEED)
+val_QIDs, test_QIDs = train_test_split(val_and_test_QIDs, train_size=val_size, random_state=SEED)
 test_size = len(test_QIDs)
+print(f"monolingual_train size \t{len(monolingual_train_QIDs)} \n"
+      f"multilingual_train size \t{len(multilingual_train_QIDs)} \n"
+      f"val size \t{len(val_QIDs)} \n"
+      f"test size \t{len(test_QIDs)} \n")
 
 for cur_dict in LANGUAGES_DICT.values():
     dict_of_dfs = defaultdict()

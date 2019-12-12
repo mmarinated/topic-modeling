@@ -23,7 +23,8 @@ def plot_errorbars_by_model(mean_mk, std_mk,
     assert len(mean_mk) == len(std_mk) == len(labels_m)
     assert len(colors_m) >= len(mean_mk)
     if axis is None:
-        _, axis = plt.subplots(1, 1)
+        fig, axis = plt.subplots(1, 1)
+#         fig.set_size_inches(10, 6)
     
     n_m = len(labels_m)
     shift_m = np.linspace(0, 0.2, n_m)
@@ -35,7 +36,7 @@ def plot_errorbars_by_model(mean_mk, std_mk,
                     fmt='o', label=label, color=color,
                     ecolor=color)
 
-    axis.set_title("Comparison of models")
+#     axis.set_title("Comparison of models")
     axis.set_xticks(range(len(xticklabels_k)))
     axis.set_xticklabels(labels=xticklabels_k)
 

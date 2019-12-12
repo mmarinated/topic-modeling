@@ -82,7 +82,21 @@ def get_mixed_datasets(LANGUAGES_LIST=("english", "russian", "hindi"), SAVE=Fals
 
     wiki_train = pd.concat(wiki_train).sample(frac=1, random_state=SEED).reset_index(drop=True)
     wiki_valid = pd.concat(wiki_valid).sample(frac=1, random_state=SEED).reset_index(drop=True)
+    # Add bilingual datasets
+    wiki_train_en_ru = pd.concat([
+        dict_of_dfs[f"multilingual_train_en"], dict_of_dfs[f"multilingual_train_ru"],
+    ]).sample(frac=1, random_state=SEED).reset_index(drop=True)
+    wiki_train_en_hi = pd.concat([
+        dict_of_dfs[f"multilingual_train_en"], dict_of_dfs[f"multilingual_train_hi"],
+    ]).sample(frac=1, random_state=SEED).reset_index(drop=True)
+    wiki_train_ru_hi = pd.concat([
+        dict_of_dfs[f"multilingual_train_ru"], dict_of_dfs[f"multilingual_train_hi"],
+    ]).sample(frac=1, random_state=SEED).reset_index(drop=True)
 
+
+    dict_of_dfs["train_en_ru"] = wiki_train_en_ru
+    dict_of_dfs["train_en_hi"] = wiki_train_en_hi
+    dict_of_dfs["train_ru_hi"] = wiki_train_ru_hi
     dict_of_dfs["train"] = wiki_train
     dict_of_dfs["val"] = wiki_valid
 
