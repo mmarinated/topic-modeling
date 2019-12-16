@@ -1,7 +1,8 @@
+from collections import OrderedDict
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from collections import OrderedDict
 
 # c - num classifiers
 # b - batch
@@ -61,7 +62,7 @@ class FinalModel(nn.Module):
     """
     def __init__(self, options):
         super(FinalModel, self).__init__()
-        
+
         self.layer_bag_of_words = BagOfWords(options["VOCAB_SIZE"], options["dim_e"], options["pretrained_embeddings"])
         self.layer_out = FeedForward(
             in_features=options["dim_e"],
