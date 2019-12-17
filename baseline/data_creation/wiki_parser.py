@@ -101,10 +101,11 @@ _digits_to_words_dict = {
 }
 
 _common_forbidden_patterns =  [
+#    "<!--.*?-->"  # this would remove any commented-out text, which is rare but sometimes substantial
     "\[\[category:.*?\]\]", # EDITED remove categories [[Category:Far-left politics]]
     "\[\[категория:.*?\]\]", # EDITED: remove category for Russian
     "\[\[श्रेणी:.*?\]\]", # EDITED: remove category for Hindi
-    "{{.*}}" # put a star?
+    "{{.*?}}" # ? makes sure this is non-greedy and only matches to end of the template
     ,"&amp;"
     ,"&lt;"
     ,"&gt;"
