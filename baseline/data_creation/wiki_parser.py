@@ -1,11 +1,18 @@
 """
 Parser class -- for parsing json file with Wikipedia articles to get
+- title of the article,
+- categories of the article, 
 - tokens of text of the article,
 - tokens of sections of the article,
 - list of outlinks.
 
 Main function is 
-    - get_wiki_tokenized_dataset.
+    - get_wiki_tokenized_dataset(
+            self, fname, *,
+            extract_title=True, extract_tokens=True, extract_categories=True,
+            extract_section=False, extract_outlinks=False,
+            debug=False)
+It returns the df with columns specified in the arguements.
 """
 import json
 import re
