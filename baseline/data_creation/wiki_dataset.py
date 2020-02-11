@@ -1,4 +1,3 @@
-
 from collections import defaultdict
 
 import numpy
@@ -6,19 +5,14 @@ import pandas as pd
 import torch
 from sklearn.preprocessing import MultiLabelBinarizer
 
-from ..MY_PATHS import *
-from preprocess import (TensoredDataset, create_dict_of_tensor_datasets,
+from baseline.MY_PATHS import *
+from baseline.data_creation.preprocess import (TensoredDataset, create_dict_of_tensor_datasets,
                         create_lookups_for_vocab, create_vocab_from_tokens,
-                        pad_collate_fn, tokenize_dataset)
+                        pad_collate_fn, tokenize_dataset,
+                        load_vectors, create_embeddings_matrix)
+from baseline.utils import get_classes_list
 
 SEED = 57
-
-
-# these values cannot be changed
-monolingual_train_size = 30000
-multilingual_train_size = 10000
-val_size = 1000
-
 
 def get_mixed_datasets(LANGUAGES_LIST=("english", "russian", "hindi"), SAVE=False, LOAD=True):
     """
@@ -29,22 +23,10 @@ def get_mixed_datasets(LANGUAGES_LIST=("english", "russian", "hindi"), SAVE=Fals
 
     # assuming the data is in PATH_TO_DATA_FOLDER
     for language in LANGUAGES_LIST:
-        language_code = language[:2]
-        LANGUAGES_DICT[language]["language_code"] = language_code
-        FILE_NAMES_DICT = {
-            "vocab": f"{PATH_TO_DATA_FOR_MODEL_FOLDER}vocab_all_{language_code}.pt",
-            "monolingual_train": f"{PATH_TO_DATA_FOR_MODEL_FOLDER}df_wiki_monolingual_train_{monolingual_train_size}_{language_code}.pt",
-            "multilingual_train": f"{PATH_TO_DATA_FOR_MODEL_FOLDER}df_wiki_multilingual_train_{multilingual_train_size}_{language_code}.pt",
-            "val": f"{PATH_TO_DATA_FOR_MODEL_FOLDER}df_wiki_valid_{val_size}_{language_code}.pt",
-            "test": f"{PATH_TO_DATA_FOR_MODEL_FOLDER}df_wiki_test_{language_code}.pt",
-            "fasttext_embeddings": f"{PATH_TO_EMBEDDINGS_FOLDER}wiki.{language_code}.align.vec",
-            "embed_matrix": f'{PATH_TO_SAVED_EMBED_FOLDER}embeddings_matrix_with_idx_to_word_{language_code}.pt',
-        }
-        # ADD check that these files exist
-        LANGUAGES_DICT[language]["FILE_NAMES_DICT"] = FILE_NAMES_DICT
+        LANGUAGES_DICT[language]["FILE_NAMES_DICT"] = get_paths(language)
 
     # LOAD vocab, tensor dataset, classes
-    classes = torch.load(PATH_TO_DATA_FOLDER + "45_classes_list.pt")
+    classes = get_classes_list()
     mlb = MultiLabelBinarizer(classes)
 
     for language, lang_dict in LANGUAGES_DICT.items():
@@ -70,7 +52,7 @@ def get_mixed_datasets(LANGUAGES_LIST=("english", "russian", "hindi"), SAVE=Fals
     dict_of_dfs = defaultdict()
 
     for language, lang_dict in LANGUAGES_DICT.items():
-        language_code = lang_dict["language_code"]
+        language_code = language[:2]
         dict_of_dfs[f"monolingual_train_{language_code}"], dict_of_dfs[f"multilingual_train_{language_code}"] =\
                 (torch.load(lang_dict["FILE_NAMES_DICT"]["monolingual_train"]),
                 torch.load(lang_dict["FILE_NAMES_DICT"]["multilingual_train"]))
@@ -105,22 +87,21 @@ def get_mixed_datasets(LANGUAGES_LIST=("english", "russian", "hindi"), SAVE=Fals
     dict_wiki_tensor_dataset = create_dict_of_tensor_datasets(dict_of_dfs, word_to_index, max_num_tokens=None)
 
     for language, lang_dict in LANGUAGES_DICT.items():
-        if LOAD:
-            embed_info_dict = torch.load(lang_dict["FILE_NAMES_DICT"]["embed_matrix"])
-            LANGUAGES_DICT[language]["weights_matrix_ve"] = embed_info_dict["weights_matrix_ve"]
         if SAVE:
-            language_code = lang_dict["language_code"]
             # 2.5 million
-            embeddings = utils.load_vectors(lang_dict["FILE_NAMES_DICT"]["fasttext_embeddings"])
+            embeddings = load_vectors(lang_dict["FILE_NAMES_DICT"]["fasttext_embeddings"])
             #Creating the weight matrix for pretrained word embeddings
-            weights_matrix_ve = utils.create_embeddings_matrix(lang_dict["index_to_word"], embeddings)
+            weights_matrix_ve = create_embeddings_matrix(lang_dict["index_to_word"], embeddings)
             LANGUAGES_DICT[language]["weights_matrix_ve"] = weights_matrix_ve
             # SAVE embeddings matrix together with index_to_word
             torch.save({
                 "index_to_word" : lang_dict["index_to_word"],
                 "weights_matrix_ve" : weights_matrix_ve,
             }, lang_dict["FILE_NAMES_DICT"]["embed_matrix"])
-            print("Saved.") 
+            print("Saved", lang_dict["FILE_NAMES_DICT"]["embed_matrix"])
+        if LOAD:
+            embed_info_dict = torch.load(lang_dict["FILE_NAMES_DICT"]["embed_matrix"])
+            LANGUAGES_DICT[language]["weights_matrix_ve"] = embed_info_dict["weights_matrix_ve"]
 
     #Creating the weight matrix for pretrained word embeddings
     # 0 - <pad>, 1 - <unk> 

@@ -30,6 +30,7 @@ def _get_common_set_of_QIDs(list_of_lists_of_QIDs : List[List[str]]) -> Set[str]
     return common_set
 
 def remove_non_common_articles_and_sort_by_QID(languages_dict):
+    """Modifies wiki_dfs in languages_dict inplace"""
     list_of_lists_of_QIDs = [cur_dict["wiki_df"].QID for cur_dict in languages_dict.values()]
     print(f"Num of articles initially: \n {languages_dict.keys()} \n {[len(l) for l in list_of_lists_of_QIDs]}")
     common_set = _get_common_set_of_QIDs(list_of_lists_of_QIDs)

@@ -8,8 +8,8 @@ from torch.utils import data
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-from ..model import FinalModel
-from ..MY_PATHS import *
+from baseline.model import FinalModel
+from baseline.MY_PATHS import *
 
 
 def get_train_val_loader(train_dataset, list_val_dataset, *,

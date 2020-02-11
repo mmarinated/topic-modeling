@@ -24,6 +24,7 @@ import pandas as pd
 from nltk.corpus import stopwords
 from tqdm import tqdm_notebook as tqdm
 
+from ..MY_PATHS import *
 
 __all__ = ["Parser"]
 
@@ -51,7 +52,7 @@ def _get_stopwords(language):
     except OSError:
         # Load words from file
         if language == "hindi":
-            file = open('hindi_stopwords.txt')
+            file = open(PATH_TO_HINDI_STOPWORDS)
             text = file.read()
             stop_words = set([word for word in text.split("\n") if word != ""])
         else:
