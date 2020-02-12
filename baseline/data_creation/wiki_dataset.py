@@ -78,8 +78,8 @@ def get_monolingual_datasets(LANGUAGE, max_num_tokens=None, SAVE=False, LOAD=Tru
 #     dict_of_dfs["train_en_ru"] = wiki_train_en_ru
 #     dict_of_dfs["train_en_hi"] = wiki_train_en_hi
 #     dict_of_dfs["train_ru_hi"] = wiki_train_ru_hi
-#     dict_of_dfs["train"] = wiki_train
-#     dict_of_dfs["val"] = wiki_valid
+    dict_of_dfs["train"] = wiki_train
+    dict_of_dfs["val"] = wiki_valid
 
     print(f"Combined train size: {wiki_train.shape[0]} \nCombined val size: {wiki_valid.shape[0]}")
     # wiki_train.head()

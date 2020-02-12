@@ -7,6 +7,7 @@ from sklearn.metrics import precision_recall_fscore_support
 from torch.utils import data
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 from baseline.model import FinalModel
 from baseline.MY_PATHS import *
@@ -42,6 +43,7 @@ class ClassifierLearner:
         self.model = FinalModel(self.options).to(device)
         self.criterion = criterion or torch.nn.BCEWithLogitsLoss()
         self.optimizer = optimizer or torch.optim.Adam(self.model.parameters(), lr=3e-3)
+        self.lr_scheduler = ReduceLROnPlateau(optimizer, mode='max', factor=0.3, patience=7)
 
         self.logger = SummaryWriter(PATH_TO_TENSORBOARD_RUNS, comment=self.model_name)
         # self.logger.add_text("model_description", self._model.__repr__())
@@ -49,6 +51,7 @@ class ClassifierLearner:
         self.best_epoch = -1
         self.best_val_f1_micro = 0
         self.best_metrics_dict = {}
+        self.list_metrics_dict_by_epoch = []
         self.plot_cache = []
 
 
@@ -70,7 +73,7 @@ class ClassifierLearner:
         for epoch in range(num_epochs):
             print(epoch, "epoch")
             runnin_loss = 0.0
-            for i, (data, length, labels) in enumerate(self.train_loader):        
+            for batch_idx, (data, length, labels) in enumerate(self.train_loader):        
                 self.model.train()
                 data_batch, length_batch, label_batch =\
                     data.to(self.device),length.to(self.device), labels.float().to(self.device)
@@ -95,7 +98,7 @@ class ClassifierLearner:
 
             # updating
             new_f1_score = self.validate(loader=self.name_to_val_loader["val"], epoch=epoch, save_model=save_model)
-            
+            self.lr_scheduler.step(new_f1_score)
             # logging
             self.logger.add_scalar("train/bce_loss", runnin_loss, epoch)
             _tmp_f1_micro = self.get_test_metrics(self.train_loader, device=self.device)["f1_micro"]
@@ -169,6 +172,7 @@ class ClassifierLearner:
         """
         metrics_dict = self.get_test_metrics(loader, device=self.device)
         self.print_results(metrics_dict)
+        self.list_metrics_dict_by_epoch.append(metrics_dict)
         if metrics_dict["f1_micro"] > self.best_val_f1_micro:
             self.best_epoch = epoch
             self.best_val_f1_micro = metrics_dict["f1_micro"]
@@ -198,3 +202,40 @@ class ClassifierLearner:
         print("Precision micro: {}, Recall micro: {}, F1 micro: {} ".format(
             metrics_dict["precision_micro"], metrics_dict["recall_micro"], metrics_dict["f1_micro"]
         ))
+
+
+###
+##  utils to write concise for-loop
+###
+
+from functools import partial
+from baseline.data_creation.preprocess import pad_collate_fn
+
+
+def get_model_name_from_options(options):
+    return "_".join([f"{k}_{v}" for k, v in options.items()])
+
+def fit_model_given_options(
+        options, dict_wiki_tensor_dataset, *,
+        num_epochs, lr,
+        pad_idx, device, TRAIN_SET_NAME,
+        VAL_KEYS):
+
+    model_name = get_model_name_from_options(options)
+    learner = ClassifierLearner(options, model_name, device=device)
+
+    train_loader, dict_val_loader = get_train_val_loader(
+        dict_wiki_tensor_dataset[TRAIN_SET_NAME], 
+        [dict_wiki_tensor_dataset[key] for key in VAL_KEYS], 
+        collate_fn=partial(pad_collate_fn, pad_token=pad_idx)
+    )
+
+    dict_val_loader = {
+        key : val_loader 
+        for key, val_loader in zip(VAL_KEYS, dict_val_loader)
+    } 
+
+    learner.set_loaders(train_loader, dict_val_loader)
+    learner.train_model(num_epochs=num_epochs, lr=lr)
+
+    return learner
