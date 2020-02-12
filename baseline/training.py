@@ -128,17 +128,23 @@ class ClassifierLearner:
                 outputs_list.append(outputs_bc)
                 true_list.append(label_batch)
         
+        true_nc = np.vstack(true_list)
+        pred_nc = np.vstack(outputs_list)
+        n = true_nc.shape[0]
+        present_classes = list(np.arange(n)[true_nc.sum(axis=0) > 0])
         # macro precision, recall, f-score
         precision_macro, recall_macro, f1_macro, _ = precision_recall_fscore_support(
-            np.vstack(true_list),
-            np.vstack(outputs_list),
-            average="macro"
+            true_nc,
+            pred_nc,
+            average="macro",
+            labels=present_classes
         )
         # micro precision, recall, f-score
         precision_micro, recall_micro, f1_micro, _ = precision_recall_fscore_support(
-            np.vstack(true_list),
-            np.vstack(outputs_list),
-            average="micro"
+            true_nc,
+            pred_nc,
+            average="micro",
+            labels=present_classes
         )
         # combine all metrics in a dict
         dict_metrics = {
