@@ -54,6 +54,7 @@ class ClassifierLearner:
         self.best_metrics_dict = {}
         self.list_metrics_dict_by_epoch = []
         self.plot_cache = []
+        self.losses = []
 
 
     def set_loaders(self, train_loader, name_to_val_loader: Dict[str, Any]):
@@ -86,6 +87,8 @@ class ClassifierLearner:
                 self.optimizer.step()
 
                 runnin_loss += loss.item()
+                self.losses.append(loss.item())
+                print(f"Loss: {loss.item()}")
                 #torch.nn.utils.clip_grad_norm(model.parameters(), 10)
                 # if i>0 and i % 100 == 0:
                 #     print('Epoch: [{}/{}], Step: [{}/{}], Train_loss: {}'.format(
