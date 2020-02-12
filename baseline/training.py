@@ -41,15 +41,16 @@ class ClassifierLearner:
         self.model_name = model_name
         self.device = device
         self.model = FinalModel(self.options).to(device)
-        self.criterion = criterion or torch.nn.BCEWithLogitsLoss()
-        self.optimizer = optimizer or torch.optim.Adam(self.model.parameters(), lr=3e-3)
-        self.lr_scheduler = ReduceLROnPlateau(optimizer, mode='max', factor=0.3, patience=7)
+        self.criterion = criterion if criterion is not None else torch.nn.BCEWithLogitsLoss()
+        # we change lr later
+        self.optimizer = optimizer if optimizer is not None else torch.optim.Adam(self.model.parameters(), lr=3e-3)
+        self.lr_scheduler = ReduceLROnPlateau(self.optimizer, mode='max', factor=0.6, patience=10)
 
         self.logger = SummaryWriter(PATH_TO_TENSORBOARD_RUNS, comment=self.model_name)
         # self.logger.add_text("model_description", self._model.__repr__())
 
         self.best_epoch = -1
-        self.best_val_f1_micro = 0
+        self.best_val_f1_micro = -1
         self.best_metrics_dict = {}
         self.list_metrics_dict_by_epoch = []
         self.plot_cache = []
