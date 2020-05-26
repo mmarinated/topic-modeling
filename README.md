@@ -1,9 +1,10 @@
 # topic-modeling
 Inferring the topics of Wikipedia articles in different languages.   
-Capstone project, Fall 2019.
+Capstone project, Fall 2019.  
+Top-3 best capstone poster among 36 teams.
 
 ## Research directions
-- Improving the architecture of the model for English articles currently deployed.
+- Improving the architecture of currently deployed model for English articles.
     - bag-of-words models with fastText embeddings
     - LSTM, LSTM with self attention, LSTM with IDF self attention weights, transformer
 -  Transferring the model to articles in other languages (Hindi, Russian).
@@ -13,7 +14,7 @@ Capstone project, Fall 2019.
     - graph CNN model (GraphSAGE)
 
 [Report](report/Capstone_Report_2019.pdf)  
-[Poster](report/Capstone_Poster_2019.pdf) - top-3 best capstone poster among 36 teams.
+[Poster](report/Capstone_Poster_2019.pdf)
 
 ![Poster](report/poster_image.png)
 
